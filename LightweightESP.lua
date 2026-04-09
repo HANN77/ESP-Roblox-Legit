@@ -221,8 +221,9 @@ local function createEspSlot()
 
     -- Full-body Chams (native Roblox Highlight instance)
     slot.highlight = Instance.new("Highlight")
-    slot.highlight.FillTransparency = 1  -- 100% transparent fill so you see the literal avatar
-    slot.highlight.OutlineColor = C.magenta
+    slot.highlight.FillColor = C.magenta
+    slot.highlight.FillTransparency = 0.5  -- 50% fill so you can see both color and avatar
+    slot.highlight.OutlineColor = C.cyan
     slot.highlight.OutlineTransparency = 0
     slot.highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     slot.highlight.Enabled = false
@@ -385,9 +386,9 @@ local function updateESP()
             s.hpBg.Visible = false
         end
 
-        -- ── CHAMS (OUTLINE ONLY) ──
+        -- ── CHAMS ──
         if settings.highlight then
-            s.highlight.FillTransparency = 1
+            s.highlight.FillTransparency = 0.5 + (1 - fadeFactor) * 0.5
             s.highlight.OutlineTransparency = (1 - fadeFactor) * 0.7
             s.highlight.Adornee = char
             s.highlight.Enabled = true
