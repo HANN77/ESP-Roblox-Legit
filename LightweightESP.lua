@@ -9,7 +9,7 @@
     Run in-game via any executor.
 ]]
 
-local SCRIPT_VERSION = "2.5"
+local SCRIPT_VERSION = "2.6"
 local MAX_POOL = 24 -- max simultaneous tracked players
 
 -- ═══════════════════════════════════════════════════════════
@@ -649,46 +649,78 @@ local function makeSlider(label, settingKey, min, max, isFloat, order, parentPag
     end))
 end
 
-local function makeColorPicker(label, settingKey, order)
+local function makeColorPicker(label, settingKey, order, parentPage)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
+    row.Size = UDim2.new(0,310,0,40); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = parentPage or pageESP
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.3,0,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
+    lbl.Size = UDim2.new(0,100,0,20); lbl.BackgroundTransparency = 1; lbl.Text = label
     lbl.TextColor3 = C.textPri; lbl.Font = Enum.Font.Gotham; lbl.TextSize = 12
     lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = row
 
     local hexBox = Instance.new("TextBox")
-    hexBox.Size = UDim2.new(0,60,0,20); hexBox.Position = UDim2.new(0.3,0,0.5,-10)
+    hexBox.Size = UDim2.new(0,60,0,16); hexBox.Position = UDim2.new(0,100,0,2)
     hexBox.BackgroundColor3 = C.surface; hexBox.TextColor3 = C.textPri
     hexBox.Font = Enum.Font.GothamMedium; hexBox.TextSize = 10
     hexBox.Text = "#" .. settings[settingKey]:ToHex():upper()
     hexBox.Parent = row; corner(hexBox, 4); stroke(hexBox, C.divider, 1)
 
-    local presetCont = Instance.new("Frame")
-    presetCont.Size = UDim2.new(0.5, 0, 1, 0); presetCont.Position = UDim2.new(0.5, 0, 0, 0)
-    presetCont.BackgroundTransparency = 1; presetCont.Parent = row
-    local pl = Instance.new("UIListLayout"); pl.FillDirection = Enum.FillDirection.Horizontal
-    pl.VerticalAlignment = Enum.VerticalAlignment.Center; pl.Padding = UDim.new(0,6)
-    pl.HorizontalAlignment = Enum.HorizontalAlignment.Right; pl.Parent = presetCont
-    
-    local presetColors = { C.red, C.green, C.cyan, C.magenta, C.yellow, C.accentGlow }
-    for _, col in ipairs(presetColors) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0,18,0,18); btn.BackgroundColor3 = col
-        btn.BorderSizePixel = 0; btn.Text = ""; btn.Parent = presetCont; corner(btn, 9)
-        btn.MouseButton1Click:Connect(function()
-            settings[settingKey] = col
-            hexBox.Text = "#" .. col:ToHex():upper()
-        end)
+    local preview = Instance.new("Frame")
+    preview.Size = UDim2.new(0,16,0,16); preview.Position = UDim2.new(0,168,0,2)
+    preview.BackgroundColor3 = settings[settingKey]
+    preview.Parent = row; corner(preview, 4); stroke(preview, C.divider, 1)
+
+    local hueBg = Instance.new("Frame")
+    hueBg.Size = UDim2.new(0,310,0,8); hueBg.Position = UDim2.new(0,0,0,26)
+    hueBg.BackgroundColor3 = Color3.new(1,1,1); hueBg.BorderSizePixel = 0
+    hueBg.Parent = row; corner(hueBg, 4)
+    local grad = Instance.new("UIGradient")
+    grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(1/6, Color3.fromRGB(255,255,0)),
+        ColorSequenceKeypoint.new(2/6, Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(3/6, Color3.fromRGB(0,255,255)),
+        ColorSequenceKeypoint.new(4/6, Color3.fromRGB(0,0,255)), ColorSequenceKeypoint.new(5/6, Color3.fromRGB(255,0,255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0))
+    })
+    grad.Parent = hueBg
+
+    local h, s, v = settings[settingKey]:ToHSV()
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0,4,0,14); knob.Position = UDim2.new(h,0,0.5,0)
+    knob.AnchorPoint = Vector2.new(0.5, 0.5); knob.BackgroundColor3 = Color3.new(1,1,1)
+    knob.Parent = hueBg; corner(knob, 2); stroke(knob, Color3.new(0,0,0), 1)
+
+    local hueBtn = Instance.new("TextButton")
+    hueBtn.Size = UDim2.new(1,0,1,10); hueBtn.Position = UDim2.new(0,0,0.5,-5)
+    hueBtn.BackgroundTransparency = 1; hueBtn.Text = ""; hueBtn.Parent = hueBg
+
+    local dragging = false
+    hueBtn.MouseButton1Down:Connect(function() dragging = true end)
+    table.insert(connections, UserInputService.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then dragging = false end
+    end))
+
+    local function updateColor(c)
+        settings[settingKey] = c
+        hexBox.Text = "#" .. c:ToHex():upper()
+        preview.BackgroundColor3 = c
+        if uiUpdaters[settingKey] then uiUpdaters[settingKey](c) end
     end
+    
+    table.insert(connections, UserInputService.InputChanged:Connect(function(inp)
+        if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+            local p = math.clamp((inp.Position.X - hueBg.AbsolutePosition.X) / hueBg.AbsoluteSize.X, 0, 1)
+            knob.Position = UDim2.new(p, 0, 0.5, 0)
+            updateColor(Color3.fromHSV(p, 1, 1))
+        end
+    end))
 
     hexBox.FocusLost:Connect(function()
         local txt = hexBox.Text:gsub("#", "")
         pcall(function()
             local c = Color3.fromHex(txt)
-            settings[settingKey] = c
-            hexBox.Text = "#" .. c:ToHex():upper()
+            updateColor(c)
+            local hue = c:ToHSV()
+            knob.Position = UDim2.new(hue, 0, 0.5, 0)
         end)
     end)
 end
