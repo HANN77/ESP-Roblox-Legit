@@ -9,7 +9,7 @@
     Run in-game via any executor.
 ]]
 
-local SCRIPT_VERSION = "2.0"
+local SCRIPT_VERSION = "2.1"
 local MAX_POOL = 24 -- max simultaneous tracked players
 
 -- ═══════════════════════════════════════════════════════════
@@ -272,6 +272,7 @@ corner(radarFrame, 8); stroke(radarFrame, C.accent, 1)
 -- Crosshair lines
 for _, cfg in ipairs({{UDim2.new(0.5,0,0,0), UDim2.new(0,1,1,0)}, {UDim2.new(0,0,0.5,0), UDim2.new(1,0,0,1)}}) do
     local l = Instance.new("Frame"); l.Position = cfg[1]; l.Size = cfg[2]
+    l.AnchorPoint = Vector2.new(0.5, 0.5)
     l.BackgroundColor3 = C.divider; l.BackgroundTransparency = 0.6; l.BorderSizePixel = 0; l.Parent = radarFrame
 end
 
@@ -290,7 +291,7 @@ end
 -- ESP Render Engine (the core)
 -- ═══════════════════════════════════════════════════════════
 local frameSkip = 0
-local THROTTLE  = 2 -- update every N render frames
+local THROTTLE  = 1 -- update every render frame (removes stutter)
 
 local function updateESP()
     frameSkip = frameSkip + 1
@@ -310,9 +311,6 @@ local function updateESP()
     local camCF  = cam.CFrame
     local myPos  = camCF.Position -- FIX: Core distance from camera, enabling ESP while droning/spectating
     local myTeam = LocalPlayer.Team
-
-    local camLook = camCF.LookVector
-    local radarAngle = math.atan2(camLook.X, camLook.Z) -- for radar rotation
 
     local slotIdx = 0
 
@@ -341,7 +339,7 @@ local function updateESP()
 
         -- ── TRACER ──
         if settings.tracers and rootVis then
-            local startPos = Vector2.new(vpSize.X / 2, vpSize.Y / 2)
+            local startPos = Vector2.new(vpSize.X / 2, vpSize.Y)
             local endPos   = Vector2.new(screenX, screenY)
             local diff     = endPos - startPos
             local length   = diff.Magnitude
@@ -743,7 +741,13 @@ local function makeDrag(obj)
     table.insert(connections, obj.InputBegan:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
             dragging = true; dragStart = inp.Position; startPos = main.Position
-            inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragging = false end end)
+            local con
+            con = inp.Changed:Connect(function() 
+                if inp.UserInputState == Enum.UserInputState.End then 
+                    dragging = false 
+                    if con then con:Disconnect() end
+                end 
+            end)
         end
     end))
 end
@@ -813,6 +817,12 @@ do
             local def = ch.BackgroundTransparency
             ch.BackgroundTransparency = 1
             tw(ch, {BackgroundTransparency = def}, 0.6) 
+            
+            if ch:IsA("TextLabel") or ch:IsA("TextButton") or ch:IsA("TextBox") then
+                local tDef = ch.TextTransparency
+                ch.TextTransparency = 1
+                tw(ch, {TextTransparency = tDef}, 0.6)
+            end
         end 
     end
     task.wait(0.4)

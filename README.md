@@ -1,4 +1,4 @@
-# 👁 Lightweight ESP v2.0
+# 👁 Lightweight ESP v2.1
 
 A lightweight, low-level executor compatible ESP script for Roblox. Designed for **minimal performance impact** and **maximum compatibility** — no Drawing library or high-UNC functions required.
 
