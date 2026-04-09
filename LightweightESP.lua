@@ -341,7 +341,7 @@ local function updateESP()
 
         -- ── TRACER ──
         if settings.tracers and rootVis then
-            local startX, startY = vpSize.X / 2, vpSize.Y
+            local startX, startY = vpSize.X / 2, vpSize.Y / 2
             local dx = screenX - startX
             local dy = screenY - startY
             local length = math.sqrt(dx*dx + dy*dy)
@@ -404,12 +404,11 @@ local function updateESP()
 
         -- ── RADAR DOT ──
         if settings.radar then
-            local offset = hrp.Position - myPos
-            local rx = offset.X * math.cos(-radarAngle) - offset.Z * math.sin(-radarAngle)
-            local ry = offset.X * math.sin(-radarAngle) + offset.Z * math.cos(-radarAngle)
-            local radarScale = (RADAR_SIZE / 2 - 6) / settings.maxDistance
-            local dotX = math.clamp(rx * radarScale, -(RADAR_SIZE/2-4), RADAR_SIZE/2-4)
-            local dotY = math.clamp(-ry * radarScale, -(RADAR_SIZE/2-4), RADAR_SIZE/2-4)
+            local objSpace = cam.CFrame:PointToObjectSpace(hrp.Position)
+            local RADAR_RANGE = 150 -- Fixed radar scale so enemies don't get squished to 1 pixel
+            local radarScale = (RADAR_SIZE / 2 - 6) / RADAR_RANGE
+            local dotX = math.clamp(objSpace.X * radarScale, -(RADAR_SIZE/2-4), RADAR_SIZE/2-4)
+            local dotY = math.clamp(objSpace.Z * radarScale, -(RADAR_SIZE/2-4), RADAR_SIZE/2-4)
             s.radarDot.Position = UDim2.new(0.5, dotX, 0.5, dotY)
             s.radarDot.BackgroundColor3 = C.red
             s.radarDot.Visible = true
@@ -510,7 +509,7 @@ makeText(pageHome, "github.com/HANN77", 11, Enum.Font.Gotham, C.textMut, 8)
 local pageESP = Instance.new("ScrollingFrame", pageContainer)
 pageESP.Size = UDim2.new(1,0,1,0); pageESP.BackgroundTransparency = 1; pageESP.Visible = false
 pageESP.ScrollBarThickness = 2; pageESP.ScrollBarImageColor3 = C.divider
-pageESP.CanvasSize = UDim2.new(0,0,0,650)
+pageESP.CanvasSize = UDim2.new(0,320,0,760)
 pad(pageESP, 10, 10, 14, 14)
 local eLay = Instance.new("UIListLayout", pageESP)
 eLay.SortOrder = Enum.SortOrder.LayoutOrder; eLay.Padding = UDim.new(0, 6)
@@ -731,12 +730,16 @@ end)
 -- Draggable
 -- ═══════════════════════════════════════════════════════════
 local dragging, dragInput, dragStart, startPos = false
-table.insert(connections, tBar.InputBegan:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        dragging = true; dragStart = inp.Position; startPos = main.Position
-        inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragging = false end end)
-    end
-end))
+local function makeDrag(obj)
+    table.insert(connections, obj.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; dragStart = inp.Position; startPos = main.Position
+            inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragging = false end end)
+        end
+    end))
+end
+makeDrag(tBar); makeDrag(tabHome); makeDrag(tabESP)
+
 table.insert(connections, tBar.InputChanged:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then dragInput = inp end
 end))
