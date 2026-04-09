@@ -341,14 +341,17 @@ local function updateESP()
 
         -- ── TRACER ──
         if settings.tracers and rootVis then
-            local startX, startY = vpSize.X / 2, vpSize.Y / 2
-            local dx = screenX - startX
-            local dy = screenY - startY
-            local length = math.sqrt(dx*dx + dy*dy)
-            local angle  = math.deg(math.atan2(dy, dx))
+            local startPos = Vector2.new(vpSize.X / 2, vpSize.Y / 2)
+            local endPos   = Vector2.new(screenX, screenY)
+            local diff     = endPos - startPos
+            local length   = diff.Magnitude
+            local angle    = math.deg(math.atan2(diff.Y, diff.X))
+            local midPoint = startPos:Lerp(endPos, 0.5)
+            
             s.tracer.Size = UDim2.new(0, length, 0, 1)
-            s.tracer.Position = UDim2.new(0, startX, 0, startY)
+            s.tracer.Position = UDim2.new(0, midPoint.X, 0, midPoint.Y)
             s.tracer.Rotation = angle
+            s.tracer.AnchorPoint = Vector2.new(0.5, 0.5)
             s.tracer.BackgroundTransparency = 1 - fadeFactor * 0.6
             s.tracer.Visible = true
         else
@@ -390,8 +393,8 @@ local function updateESP()
 
         -- ── CHAMS ──
         if settings.highlight then
-            s.highlight.FillTransparency = settings.chamsFill + (1 - fadeFactor) * (1 - settings.chamsFill)
-            s.highlight.OutlineTransparency = (settings.chamsOutline == 0) and (1 - fadeFactor) * 0.7 or (settings.chamsOutline + (1 - fadeFactor) * (1 - settings.chamsOutline))
+            s.highlight.FillTransparency = settings.chamsFill
+            s.highlight.OutlineTransparency = settings.chamsOutline
             s.highlight.FillColor = settings.chamsColor
             s.highlight.OutlineColor = settings.chamsColor
             s.highlight.DepthMode = settings.chamsDepth and Enum.HighlightDepthMode.AlwaysOnTop or Enum.HighlightDepthMode.Occluded
@@ -534,20 +537,20 @@ local function makeToggle(label, settingKey, order)
 
     local toggleBg = Instance.new("TextButton")
     toggleBg.Size = UDim2.new(0,34,0,16); toggleBg.Position = UDim2.new(1,-34,0.5,-8)
-    toggleBg.BackgroundColor3 = settings[settingKey] and C.accent or C.surface
+    toggleBg.BackgroundColor3 = settings[settingKey] and C.green or C.surface
     toggleBg.BorderSizePixel = 0; toggleBg.Text = ""; toggleBg.AutoButtonColor = false
     toggleBg.Parent = row; corner(toggleBg, 8)
 
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0,12,0,12); knob.BackgroundColor3 = settings[settingKey] and C.bg or C.textPri; knob.BorderSizePixel = 0
+    knob.Size = UDim2.new(0,12,0,12); knob.BackgroundColor3 = settings[settingKey] and C.bg or C.red; knob.BorderSizePixel = 0
     knob.Position = settings[settingKey] and UDim2.new(1,-14,0.5,-6) or UDim2.new(0,2,0.5,-6)
     knob.Parent = toggleBg; corner(knob, 6)
 
     local function updateVisual(on)
-        tw(toggleBg, {BackgroundColor3 = on and C.accent or C.surface}, 0.2)
+        tw(toggleBg, {BackgroundColor3 = on and C.green or C.surface}, 0.2)
         tw(knob, {
             Position = on and UDim2.new(1,-14,0.5,-6) or UDim2.new(0,2,0.5,-6),
-            BackgroundColor3 = on and C.bg or C.textPri
+            BackgroundColor3 = on and C.bg or C.red
         }, 0.2)
     end
     uiUpdaters[settingKey] = updateVisual
