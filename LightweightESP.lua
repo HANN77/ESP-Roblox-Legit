@@ -219,14 +219,14 @@ local function createEspSlot()
     slot.hpBar.Size = UDim2.new(1,0,1,0); slot.hpBar.BackgroundColor3 = C.green
     slot.hpBar.BorderSizePixel = 0; slot.hpBar.Parent = slot.hpBg; corner(slot.hpBar, 2)
 
-    -- Full-body highlight (native Roblox Highlight instance)
+    -- Full-body Chams (native Roblox Highlight instance)
     slot.highlight = Instance.new("Highlight")
-    slot.highlight.FillColor = C.magenta
-    slot.highlight.FillTransparency = 0.75
-    slot.highlight.OutlineColor = C.cyan
+    slot.highlight.FillTransparency = 1  -- 100% transparent fill so you see the literal avatar
+    slot.highlight.OutlineColor = C.magenta
     slot.highlight.OutlineTransparency = 0
     slot.highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     slot.highlight.Enabled = false
+    slot.highlight.Parent = espGui -- Store safely in our GUI so it doesn't get destroyed on death
 
     -- Radar dot (lives inside radar frame, created later)
     slot.radarDot = Instance.new("Frame")
@@ -248,7 +248,7 @@ local function hideSlot(slot)
     slot.distLabel.Visible = false
     slot.hpBg.Visible = false
     slot.highlight.Enabled = false
-    slot.highlight.Parent = nil
+    slot.highlight.Adornee = nil
     slot.radarDot.Visible = false
 end
 
@@ -385,15 +385,15 @@ local function updateESP()
             s.hpBg.Visible = false
         end
 
-        -- ── FULL-BODY HIGHLIGHT ──
+        -- ── CHAMS (OUTLINE ONLY) ──
         if settings.highlight then
-            s.highlight.FillTransparency = 0.65 + (1 - fadeFactor) * 0.3
-            s.highlight.OutlineTransparency = (1 - fadeFactor) * 0.5
-            s.highlight.Parent = char
+            s.highlight.FillTransparency = 1
+            s.highlight.OutlineTransparency = (1 - fadeFactor) * 0.7
+            s.highlight.Adornee = char
             s.highlight.Enabled = true
         else
             s.highlight.Enabled = false
-            s.highlight.Parent = nil
+            s.highlight.Adornee = nil
         end
 
         -- ── RADAR DOT ──
