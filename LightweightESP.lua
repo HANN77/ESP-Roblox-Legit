@@ -9,7 +9,7 @@
     Run in-game via any executor.
 ]]
 
-local SCRIPT_VERSION = "2.1"
+local SCRIPT_VERSION = "2.2"
 local MAX_POOL = 24 -- max simultaneous tracked players
 
 -- ═══════════════════════════════════════════════════════════
@@ -61,24 +61,24 @@ local keybinds = {
 local waitingForBind = nil
 
 -- ═══════════════════════════════════════════════════════════
--- Color Palette (High Contrast "Discord" Dark Mode)
+-- Color Palette (Vibrant Navy & Electric Blue Theme)
 -- ═══════════════════════════════════════════════════════════
 local C = {
-    bg           = Color3.fromRGB(30, 31, 35),    -- Clear dark background
-    bgSec        = Color3.fromRGB(43, 45, 50),    -- Header & secondary
-    surface      = Color3.fromRGB(65, 70, 75),    -- Distinct UI elements (sliders, OFF toggles)
-    surfHover    = Color3.fromRGB(85, 90, 95),
-    accent       = Color3.fromRGB(255, 255, 255), 
-    accentGlow   = Color3.fromRGB(220, 220, 220),
-    green        = Color3.fromRGB(67, 181, 129),  -- Vibrant ON string
-    red          = Color3.fromRGB(240, 71, 71),   -- Vibrant OFF string
+    bg           = Color3.fromRGB(15, 20, 35),    -- Deep Navy
+    bgSec        = Color3.fromRGB(25, 30, 45),    -- Header & secondary
+    surface      = Color3.fromRGB(35, 45, 65),    -- Distinct UI elements
+    surfHover    = Color3.fromRGB(50, 65, 95),
+    accent       = Color3.fromRGB(0, 170, 255),   -- Electric Blue
+    accentGlow   = Color3.fromRGB(0, 200, 255),
+    green        = Color3.fromRGB(50, 205, 50),   -- Vibrant Lime ON
+    red          = Color3.fromRGB(220, 20, 60),   -- Vibrant Red OFF
     orange       = Color3.fromRGB(255, 160, 50),
     cyan         = Color3.fromRGB(0, 200, 255),   -- (Used for ESP Team)
     magenta      = Color3.fromRGB(255, 60, 180),  -- (Used for ESP Chams)
     yellow       = Color3.fromRGB(255, 220, 50),  -- (Used for ESP Health)
-    textPri      = Color3.fromRGB(250, 250, 250),
-    textMut      = Color3.fromRGB(170, 175, 180),
-    divider      = Color3.fromRGB(60, 65, 70),
+    textPri      = Color3.fromRGB(255, 255, 255),
+    textMut      = Color3.fromRGB(170, 180, 200),
+    divider      = Color3.fromRGB(0, 100, 200),   -- Electric Blue subtle
 }
 
 -- ═══════════════════════════════════════════════════════════
@@ -457,15 +457,18 @@ tbMask.Size = UDim2.new(1,0,0,10); tbMask.Position = UDim2.new(0,0,1,-10)
 tbMask.BackgroundColor3 = C.bgSec; tbMask.BorderSizePixel = 0; tbMask.Parent = tBar
 stroke(tBar, C.divider, 1)
 
-local tabHome = Instance.new("TextButton", tBar)
-tabHome.Size = UDim2.new(0.5,0,1,0); tabHome.Position = UDim2.new(0,0,0,0)
-tabHome.BackgroundTransparency = 1; tabHome.Text = "Home"
-tabHome.TextColor3 = C.accent; tabHome.Font = Enum.Font.GothamMedium; tabHome.TextSize = 12
+local tabs = {"Home", "Visual", "Combat"}
+local tabBtns = {}
+local w = 1 / #tabs
 
-local tabESP = Instance.new("TextButton", tBar)
-tabESP.Size = UDim2.new(0.5,0,1,0); tabESP.Position = UDim2.new(0.5,0,0,0)
-tabESP.BackgroundTransparency = 1; tabESP.Text = "ESP Visuals"
-tabESP.TextColor3 = C.textMut; tabESP.Font = Enum.Font.GothamMedium; tabESP.TextSize = 12
+for i, tName in ipairs(tabs) do
+    local b = Instance.new("TextButton", tBar)
+    b.Size = UDim2.new(w, 0, 1, 0); b.Position = UDim2.new((i-1)*w, 0, 0, 0)
+    b.BackgroundTransparency = 1; b.Text = tName
+    b.TextColor3 = (i == 1) and C.accent or C.textMut
+    b.Font = Enum.Font.GothamMedium; b.TextSize = 12
+    tabBtns[tName] = b
+end
 
 -- Pages Container
 local pageContainer = Instance.new("Frame", main)
@@ -515,6 +518,12 @@ pad(pageESP, 10, 10, 14, 14)
 local eLay = Instance.new("UIListLayout", pageESP)
 eLay.SortOrder = Enum.SortOrder.LayoutOrder; eLay.Padding = UDim.new(0, 6)
 
+-- Combat Page
+local pageCombat = Instance.new("Frame", pageContainer)
+pageCombat.Size = UDim2.new(1,0,1,0); pageCombat.BackgroundTransparency = 1; pageCombat.Visible = false
+makeText(pageCombat, "\n\nCombat Functionality", 18, Enum.Font.GothamBold, C.accent, 1, Enum.TextXAlignment.Center)
+makeText(pageCombat, "\n\n\n\n\nUnder Development.\nComing in a future update.", 12, Enum.Font.Gotham, C.textMut, 2, Enum.TextXAlignment.Center)
+
 local uiUpdaters = {}
 
 local function secLabel(text, order)
@@ -535,7 +544,7 @@ local function makeToggle(label, settingKey, order)
 
     local toggleBg = Instance.new("Frame")
     toggleBg.Size = UDim2.new(0,34,0,16); toggleBg.Position = UDim2.new(0,276,0.5,-8)
-    toggleBg.BackgroundColor3 = settings[settingKey] and C.green or C.surface
+    toggleBg.BackgroundColor3 = settings[settingKey] and C.green or C.red
     toggleBg.BorderSizePixel = 0; toggleBg.Parent = row; corner(toggleBg, 8)
 
     local btn = Instance.new("TextButton")
@@ -543,15 +552,14 @@ local function makeToggle(label, settingKey, order)
     btn.Parent = toggleBg
 
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0,12,0,12); knob.BackgroundColor3 = settings[settingKey] and C.bg or C.red; knob.BorderSizePixel = 0
+    knob.Size = UDim2.new(0,12,0,12); knob.BackgroundColor3 = C.textPri; knob.BorderSizePixel = 0
     knob.Position = settings[settingKey] and UDim2.new(0,20,0.5,-6) or UDim2.new(0,2,0.5,-6)
     knob.Parent = toggleBg; corner(knob, 6)
 
     local function updateVisual(on)
-        tw(toggleBg, {BackgroundColor3 = on and C.green or C.surface}, 0.2)
+        tw(toggleBg, {BackgroundColor3 = on and C.green or C.red}, 0.2)
         tw(knob, {
-            Position = on and UDim2.new(0,20,0.5,-6) or UDim2.new(0,2,0.5,-6),
-            BackgroundColor3 = on and C.bg or C.red
+            Position = on and UDim2.new(0,20,0.5,-6) or UDim2.new(0,2,0.5,-6)
         }, 0.2)
     end
     uiUpdaters[settingKey] = updateVisual
@@ -664,26 +672,6 @@ local function makeColorPicker(label, settingKey, order)
     end)
 end
 
-secLabel("VISUALS", 1)
-makeToggle("ESP Enabled", "enabled", 2)
-makeToggle("Tracers", "tracers", 3)
-makeToggle("Health Bars", "healthBars", 4)
-makeToggle("Names", "names", 5)
-makeToggle("Distance", "distance", 6)
-makeToggle("Radar", "radar", 7)
-makeSlider("Max Distance", "maxDistance", 50, 2000, false, 8)
-
-secLabel("CHAMS CONFIG", 10)
-makeToggle("Enable Chams", "highlight", 11)
-makeToggle("Always On Top", "chamsDepth", 12)
-makeSlider("Fill Transp.", "chamsFill", 0, 1, true, 13)
-makeSlider("Outline Transp.", "chamsOutline", 0, 1, true, 14)
-makeColorPicker("Color", "chamsColor", 15)
-
-secLabel("FILTERS", 20)
-makeToggle("Exclude Team", "teamCheck", 21)
-
-secLabel("KEYBINDS", 30)
 local function makeKeybindRow(label, bKey, order)
     local row = Instance.new("Frame")
     row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
@@ -713,8 +701,29 @@ local function makeKeybindRow(label, bKey, order)
         end)
     end)
 end
-makeKeybindRow("Toggle ESP", "toggle", 31)
-makeKeybindRow("Hide Panel", "hide", 32)
+
+secLabel("KEYBINDS", 1)
+makeKeybindRow("Toggle ESP", "toggle", 2)
+makeKeybindRow("Hide Panel", "hide", 3)
+
+secLabel("VISUALS", 10)
+makeToggle("ESP Enabled", "enabled", 11)
+makeToggle("Tracers", "tracers", 12)
+makeToggle("Health Bars", "healthBars", 13)
+makeToggle("Names", "names", 14)
+makeToggle("Distance", "distance", 15)
+makeToggle("Radar", "radar", 16)
+makeSlider("Max Distance", "maxDistance", 50, 2000, false, 17)
+
+secLabel("CHAMS CONFIG", 20)
+makeToggle("Enable Chams", "highlight", 21)
+makeToggle("Always On Top", "chamsDepth", 22)
+makeSlider("Fill Transp.", "chamsFill", 0, 1, true, 23)
+makeSlider("Outline Transp.", "chamsOutline", 0, 1, true, 24)
+makeColorPicker("Color", "chamsColor", 25)
+
+secLabel("FILTERS", 30)
+makeToggle("Exclude Team", "teamCheck", 31)
 
 local unBtn = Instance.new("TextButton")
 unBtn.Size = UDim2.new(1,0,0,28); unBtn.BackgroundColor3 = C.bgSec; unBtn.TextColor3 = C.red
@@ -724,14 +733,15 @@ unBtn.AutoButtonColor = false; unBtn.LayoutOrder = 40; unBtn.Parent = pageESP; c
 main.Size = UDim2.new(0, 360, 0, 440)
 
 -- Tab logic
-tabHome.MouseButton1Click:Connect(function()
-    tabHome.TextColor3 = C.accent; tabESP.TextColor3 = C.textMut
-    pageHome.Visible = true; pageESP.Visible = false
-end)
-tabESP.MouseButton1Click:Connect(function()
-    tabESP.TextColor3 = C.accent; tabHome.TextColor3 = C.textMut
-    pageESP.Visible = true; pageHome.Visible = false
-end)
+for tName, btn in pairs(tabBtns) do
+    btn.MouseButton1Click:Connect(function()
+        for _, b in pairs(tabBtns) do b.TextColor3 = C.textMut end
+        btn.TextColor3 = C.accent
+        pageHome.Visible = (tName == "Home")
+        pageESP.Visible = (tName == "Visual")
+        pageCombat.Visible = (tName == "Combat")
+    end)
+end
 
 -- ═══════════════════════════════════════════════════════════
 -- Draggable
@@ -751,7 +761,8 @@ local function makeDrag(obj)
         end
     end))
 end
-makeDrag(tBar); makeDrag(tabHome); makeDrag(tabESP)
+makeDrag(tBar)
+for _, btn in pairs(tabBtns) do makeDrag(btn) end
 
 table.insert(connections, tBar.InputChanged:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then dragInput = inp end
