@@ -39,15 +39,19 @@ local running    = true
 local connections = {}
 
 local settings = {
-    enabled     = true,
-    tracers     = true,
-    healthBars  = true,
-    highlight   = true,  -- full-body outline
-    radar       = true,
-    names       = true,
-    distance    = true,
-    teamCheck   = true,  -- exclude own team
+    enabled      = true,
+    tracers      = true,
+    healthBars   = true,
+    highlight    = true,  -- full-body outline
+    radar        = true,
+    names        = true,
+    distance     = true,
+    teamCheck    = true,  -- exclude own team
     maxDistance  = 500,   -- studs
+    chamsFill    = 0.5,
+    chamsOutline = 0.0,
+    chamsDepth   = true,  -- true = AlwaysOnTop
+    chamsColor   = Color3.fromRGB(255, 60, 180),
 }
 
 local keybinds = {
@@ -221,11 +225,11 @@ local function createEspSlot()
 
     -- Full-body Chams (native Roblox Highlight instance)
     slot.highlight = Instance.new("Highlight")
-    slot.highlight.FillColor = C.magenta
-    slot.highlight.FillTransparency = 0.5  -- 50% fill so you can see both color and avatar
-    slot.highlight.OutlineColor = C.cyan
-    slot.highlight.OutlineTransparency = 0
-    slot.highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    slot.highlight.FillColor = settings.chamsColor
+    slot.highlight.FillTransparency = settings.chamsFill
+    slot.highlight.OutlineColor = settings.chamsColor
+    slot.highlight.OutlineTransparency = settings.chamsOutline
+    slot.highlight.DepthMode = settings.chamsDepth and Enum.HighlightDepthMode.AlwaysOnTop or Enum.HighlightDepthMode.Occluded
     slot.highlight.Enabled = false
     slot.highlight.Parent = espGui -- Store safely in our GUI so it doesn't get destroyed on death
 
@@ -388,8 +392,11 @@ local function updateESP()
 
         -- ── CHAMS ──
         if settings.highlight then
-            s.highlight.FillTransparency = 0.5 + (1 - fadeFactor) * 0.5
-            s.highlight.OutlineTransparency = (1 - fadeFactor) * 0.7
+            s.highlight.FillTransparency = settings.chamsFill + (1 - fadeFactor) * (1 - settings.chamsFill)
+            s.highlight.OutlineTransparency = (settings.chamsOutline == 0) and (1 - fadeFactor) * 0.7 or (settings.chamsOutline + (1 - fadeFactor) * (1 - settings.chamsOutline))
+            s.highlight.FillColor = settings.chamsColor
+            s.highlight.OutlineColor = settings.chamsColor
+            s.highlight.DepthMode = settings.chamsDepth and Enum.HighlightDepthMode.AlwaysOnTop or Enum.HighlightDepthMode.Occluded
             s.highlight.Adornee = char
             s.highlight.Enabled = true
         else
@@ -422,7 +429,7 @@ end
 table.insert(connections, RunService.RenderStepped:Connect(updateESP))
 
 -- ═══════════════════════════════════════════════════════════
--- GUI Construction (Settings Panel)
+-- GUI Construction (Tabs & Settings)
 -- ═══════════════════════════════════════════════════════════
 local gui = Instance.new("ScreenGui")
 gui.Name = guiId; gui.ResetOnSpawn = false
@@ -431,7 +438,7 @@ pcall(function() if typeof(syn)=="table" and syn.protect_gui then syn.protect_gu
 gui.Parent = CoreGui
 
 local main = Instance.new("Frame")
-main.Name = "M"; main.Size = UDim2.new(0, 230, 0, 0)
+main.Name = "M"; main.Size = UDim2.new(0, 360, 0, 0)
 main.Position = UDim2.new(0, 14, 0.5, -200)
 main.BackgroundColor3 = C.bg; main.BorderSizePixel = 0; main.ClipsDescendants = true
 main.Active = true; main.Parent = gui; corner(main, 6); stroke(main, C.divider, 1)
@@ -442,26 +449,74 @@ sh.Size = UDim2.new(1,14,1,14); sh.Position = UDim2.new(0,-7,0,-7)
 sh.BackgroundColor3 = Color3.new(0,0,0); sh.BackgroundTransparency = 0.8
 sh.BorderSizePixel = 0; sh.ZIndex = -1; sh.Parent = main; corner(sh, 14)
 
--- Title bar
+-- Top Tabs
 local tBar = Instance.new("Frame")
-tBar.Size = UDim2.new(1,0,0,32); tBar.BackgroundColor3 = C.bgSec
+tBar.Size = UDim2.new(1,0,0,36); tBar.BackgroundColor3 = C.bgSec
 tBar.BorderSizePixel = 0; tBar.Parent = main; corner(tBar, 6)
 
 local tbMask = Instance.new("Frame")
 tbMask.Size = UDim2.new(1,0,0,10); tbMask.Position = UDim2.new(0,0,1,-10)
 tbMask.BackgroundColor3 = C.bgSec; tbMask.BorderSizePixel = 0; tbMask.Parent = tBar
+stroke(tBar, C.divider, 1)
 
-local titleLbl = Instance.new("TextLabel")
-titleLbl.Size = UDim2.new(1,-20,1,0); titleLbl.Position = UDim2.new(0,12,0,0)
-titleLbl.BackgroundTransparency = 1; titleLbl.Text = "Lightweight ESP"
-titleLbl.TextColor3 = C.textPri; titleLbl.Font = Enum.Font.GothamMedium
-titleLbl.TextSize = 12; titleLbl.TextXAlignment = Enum.TextXAlignment.Left; titleLbl.Parent = tBar
+local tabLay = Instance.new("UIListLayout", tBar)
+tabLay.FillDirection = Enum.FillDirection.Horizontal; tabLay.SortOrder = Enum.SortOrder.LayoutOrder
 
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1,0,0,400); content.Position = UDim2.new(0,0,0,32)
-content.BackgroundTransparency = 1; content.Parent = main; pad(content, 8, 8, 12, 12)
-local lay = Instance.new("UIListLayout")
-lay.SortOrder = Enum.SortOrder.LayoutOrder; lay.Padding = UDim.new(0,6); lay.Parent = content
+local tabHome = Instance.new("TextButton", tBar)
+tabHome.Size = UDim2.new(0.5,0,1,0); tabHome.BackgroundTransparency = 1; tabHome.Text = "Home"
+tabHome.TextColor3 = C.accent; tabHome.Font = Enum.Font.GothamMedium; tabHome.TextSize = 12
+
+local tabESP = Instance.new("TextButton", tBar)
+tabESP.Size = UDim2.new(0.5,0,1,0); tabESP.BackgroundTransparency = 1; tabESP.Text = "ESP Visuals"
+tabESP.TextColor3 = C.textMut; tabESP.Font = Enum.Font.GothamMedium; tabESP.TextSize = 12
+
+-- Pages Container
+local pageContainer = Instance.new("Frame", main)
+pageContainer.Size = UDim2.new(1,0,1,-36); pageContainer.Position = UDim2.new(0,0,0,36)
+pageContainer.BackgroundTransparency = 1
+
+-- Home Page
+local pageHome = Instance.new("Frame", pageContainer)
+pageHome.Size = UDim2.new(1,0,1,0); pageHome.BackgroundTransparency = 1; pageHome.Visible = true
+pad(pageHome, 16, 16, 16, 16)
+local hLay = Instance.new("UIListLayout", pageHome)
+hLay.SortOrder = Enum.SortOrder.LayoutOrder; hLay.Padding = UDim.new(0, 8)
+
+local function makeText(p, txt, size, font, col, order, align)
+    local l = Instance.new("TextLabel")
+    l.BackgroundTransparency = 1; l.Size = UDim2.new(1,0,0,size+4)
+    l.Text = txt; l.TextColor3 = col or C.textPri; l.Font = font
+    l.TextSize = size; l.TextXAlignment = align or Enum.TextXAlignment.Left
+    l.LayoutOrder = order; l.Parent = p
+    if txt:find("\n") then
+        l.TextYAlignment = Enum.TextYAlignment.Top
+        local lines = select(2, txt:gsub('\n', '\n')) + 1
+        l.Size = UDim2.new(1,0,0, lines * (size + 6))
+    end
+    return l
+end
+
+makeText(pageHome, "Lightweight Utilities", 20, Enum.Font.GothamBold, C.textPri, 1, Enum.TextXAlignment.Center)
+makeText(pageHome, "Version " .. SCRIPT_VERSION, 10, Enum.Font.GothamMedium, C.textMut, 2, Enum.TextXAlignment.Center)
+
+local d1 = Instance.new("Frame", pageHome); d1.Size=UDim2.new(1,0,0,1); d1.BackgroundColor3=C.divider; d1.LayoutOrder=3; d1.BorderSizePixel=0
+
+makeText(pageHome, "Key Features:", 12, Enum.Font.GothamBold, C.accent, 4)
+makeText(pageHome, "• Zero-cost GPU-rendered Chams\n• Extensive Chams configuration options\n• Fully rebindable modern minimalist UI\n• Automatic distance fade & culling\n• Safe Team filtering\n• Strict Low-level executor compatibility", 12, Enum.Font.Gotham, C.textPri, 5)
+
+local d2 = Instance.new("Frame", pageHome); d2.Size=UDim2.new(1,0,0,1); d2.BackgroundColor3=C.divider; d2.LayoutOrder=6; d2.BorderSizePixel=0
+
+makeText(pageHome, "Developer Hub:", 12, Enum.Font.GothamBold, C.accent, 7)
+makeText(pageHome, "github.com/HANN77", 11, Enum.Font.Gotham, C.textMut, 8)
+
+-- ESP Page (Scrollable)
+local pageESP = Instance.new("ScrollingFrame", pageContainer)
+pageESP.Size = UDim2.new(1,0,1,0); pageESP.BackgroundTransparency = 1; pageESP.Visible = false
+pageESP.ScrollBarThickness = 2; pageESP.ScrollBarImageColor3 = C.divider
+pageESP.CanvasSize = UDim2.new(0,0,0,650)
+pad(pageESP, 10, 10, 14, 14)
+local eLay = Instance.new("UIListLayout", pageESP)
+eLay.SortOrder = Enum.SortOrder.LayoutOrder; eLay.Padding = UDim.new(0, 6)
 
 local uiUpdaters = {}
 
@@ -469,12 +524,12 @@ local function secLabel(text, order)
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(1,0,0,16); l.BackgroundTransparency = 1; l.Text = text
     l.TextColor3 = C.textMut; l.Font = Enum.Font.GothamMedium; l.TextSize = 10
-    l.TextXAlignment = Enum.TextXAlignment.Left; l.LayoutOrder = order; l.Parent = content
+    l.TextXAlignment = Enum.TextXAlignment.Left; l.LayoutOrder = order; l.Parent = pageESP
 end
 
 local function makeToggle(label, settingKey, order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = content
+    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
 
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(0.65,0,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
@@ -506,71 +561,129 @@ local function makeToggle(label, settingKey, order)
         local on = settings[settingKey]
         updateVisual(on)
         if settingKey == "radar" then radarFrame.Visible = on end
-        notify(label .. (on and " On" or " Off"), C.accent, 1.5)
     end)
     return row
+end
+
+local function makeSlider(label, settingKey, min, max, isFloat, order)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1,0,0,24); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.4,0,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
+    lbl.TextColor3 = C.textPri; lbl.Font = Enum.Font.Gotham; lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = row
+
+    local sliderBg = Instance.new("TextButton")
+    sliderBg.Size = UDim2.new(0.4,0,0,4); sliderBg.Position = UDim2.new(0.45,0,0.5,-2)
+    sliderBg.BackgroundColor3 = C.surface; sliderBg.BorderSizePixel = 0; sliderBg.Text = ""
+    sliderBg.AutoButtonColor = false; sliderBg.Parent = row; corner(sliderBg, 2)
+
+    local val = settings[settingKey]
+    local initPct = (val - min) / (max - min)
+
+    local sliderFill = Instance.new("Frame")
+    sliderFill.BackgroundColor3 = C.accent; sliderFill.BorderSizePixel = 0
+    sliderFill.Size = UDim2.new(initPct, 0, 1, 0)
+    sliderFill.Parent = sliderBg; corner(sliderFill, 2)
+
+    local dragKnob = Instance.new("Frame")
+    dragKnob.Size = UDim2.new(0,10,0,10); dragKnob.BackgroundColor3 = C.accent; dragKnob.BorderSizePixel = 0
+    dragKnob.AnchorPoint = Vector2.new(0.5,0.5); dragKnob.Position = UDim2.new(1, 0, 0.5, 0)
+    dragKnob.Parent = sliderFill; corner(dragKnob, 5)
+
+    local valLbl = Instance.new("TextLabel")
+    valLbl.Size = UDim2.new(0.15,0,1,0); valLbl.Position = UDim2.new(0.85,0,0,0)
+    valLbl.BackgroundTransparency = 1; 
+    valLbl.Text = isFloat and string.format("%.2f", val) or tostring(val)
+    valLbl.TextColor3 = C.textPri; valLbl.Font = Enum.Font.GothamMedium; valLbl.TextSize = 11
+    valLbl.TextXAlignment = Enum.TextXAlignment.Right; valLbl.Parent = row
+
+    local dragging = false
+    sliderBg.MouseButton1Down:Connect(function() dragging = true end)
+    table.insert(connections, UserInputService.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then dragging = false end
+    end))
+    table.insert(connections, UserInputService.InputChanged:Connect(function(inp)
+        if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+            local pX = inp.Position.X - sliderBg.AbsolutePosition.X
+            local pct = math.clamp(pX / sliderBg.AbsoluteSize.X, 0, 1)
+            local newVal = min + (max - min) * pct
+            if not isFloat then newVal = math.floor(newVal) end
+            settings[settingKey] = newVal
+            sliderFill.Size = UDim2.new(pct, 0, 1, 0)
+            valLbl.Text = isFloat and string.format("%.2f", newVal) or tostring(newVal)
+        end
+    end))
+end
+
+local function makeColorPicker(label, settingKey, order)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.3,0,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
+    lbl.TextColor3 = C.textPri; lbl.Font = Enum.Font.Gotham; lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = row
+
+    local hexBox = Instance.new("TextBox")
+    hexBox.Size = UDim2.new(0,60,0,20); hexBox.Position = UDim2.new(0.3,0,0.5,-10)
+    hexBox.BackgroundColor3 = C.surface; hexBox.TextColor3 = C.textPri
+    hexBox.Font = Enum.Font.GothamMedium; hexBox.TextSize = 10
+    hexBox.Text = "#" .. settings[settingKey]:ToHex():upper()
+    hexBox.Parent = row; corner(hexBox, 4); stroke(hexBox, C.divider, 1)
+
+    local presetCont = Instance.new("Frame")
+    presetCont.Size = UDim2.new(0.5, 0, 1, 0); presetCont.Position = UDim2.new(0.5, 0, 0, 0)
+    presetCont.BackgroundTransparency = 1; presetCont.Parent = row
+    local pl = Instance.new("UIListLayout"); pl.FillDirection = Enum.FillDirection.Horizontal
+    pl.VerticalAlignment = Enum.VerticalAlignment.Center; pl.Padding = UDim.new(0,6)
+    pl.HorizontalAlignment = Enum.HorizontalAlignment.Right; pl.Parent = presetCont
+    
+    local presetColors = { C.red, C.green, C.cyan, C.magenta, C.yellow, C.accentGlow }
+    for _, col in ipairs(presetColors) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0,18,0,18); btn.BackgroundColor3 = col
+        btn.BorderSizePixel = 0; btn.Text = ""; btn.Parent = presetCont; corner(btn, 9)
+        btn.MouseButton1Click:Connect(function()
+            settings[settingKey] = col
+            hexBox.Text = "#" .. col:ToHex():upper()
+        end)
+    end
+
+    hexBox.FocusLost:Connect(function()
+        local txt = hexBox.Text:gsub("#", "")
+        pcall(function()
+            local c = Color3.fromHex(txt)
+            settings[settingKey] = c
+            hexBox.Text = "#" .. c:ToHex():upper()
+        end)
+    end)
 end
 
 secLabel("VISUALS", 1)
 makeToggle("ESP Enabled", "enabled", 2)
 makeToggle("Tracers", "tracers", 3)
 makeToggle("Health Bars", "healthBars", 4)
-makeToggle("Highlight", "highlight", 5)
-makeToggle("Names", "names", 6)
-makeToggle("Distance", "distance", 7)
-makeToggle("Radar", "radar", 8)
+makeToggle("Names", "names", 5)
+makeToggle("Distance", "distance", 6)
+makeToggle("Radar", "radar", 7)
+makeSlider("Max Distance", "maxDistance", 50, 2000, false, 8)
 
-secLabel("FILTERS", 11)
-makeToggle("Exclude Team", "teamCheck", 12)
+secLabel("CHAMS CONFIG", 10)
+makeToggle("Enable Chams", "highlight", 11)
+makeToggle("Always On Top", "chamsDepth", 12)
+makeSlider("Fill Transp.", "chamsFill", 0, 1, true, 13)
+makeSlider("Outline Transp.", "chamsOutline", 0, 1, true, 14)
+makeColorPicker("Color", "chamsColor", 15)
 
-secLabel("MAX DISTANCE", 13)
-local distRow = Instance.new("Frame")
-distRow.Size = UDim2.new(1,0,0,24); distRow.BackgroundTransparency = 1; distRow.LayoutOrder = 14; distRow.Parent = content
+secLabel("FILTERS", 20)
+makeToggle("Exclude Team", "teamCheck", 21)
 
-local sliderBg = Instance.new("TextButton")
-sliderBg.Size = UDim2.new(0.65,0,0,4); sliderBg.Position = UDim2.new(0,0,0.5,-2)
-sliderBg.BackgroundColor3 = C.surface; sliderBg.BorderSizePixel = 0; sliderBg.Text = ""
-sliderBg.AutoButtonColor = false; sliderBg.Parent = distRow; corner(sliderBg, 2)
-
-local sliderFill = Instance.new("Frame")
-sliderFill.BackgroundColor3 = C.accent; sliderFill.BorderSizePixel = 0
-sliderFill.Size = UDim2.new((settings.maxDistance - 50) / 1950, 0, 1, 0)
-sliderFill.Parent = sliderBg; corner(sliderFill, 2)
-
-local dragKnob = Instance.new("Frame")
-dragKnob.Size = UDim2.new(0,10,0,10); dragKnob.BackgroundColor3 = C.accent; dragKnob.BorderSizePixel = 0
-dragKnob.AnchorPoint = Vector2.new(0.5,0.5); dragKnob.Position = UDim2.new(1, 0, 0.5, 0)
-dragKnob.Parent = sliderFill; corner(dragKnob, 5)
-
-local distVal = Instance.new("TextLabel")
-distVal.Size = UDim2.new(0.3,0,1,0); distVal.Position = UDim2.new(0.7,0,0,0)
-distVal.BackgroundTransparency = 1; distVal.Text = tostring(settings.maxDistance) .. "st"
-distVal.TextColor3 = C.textPri; distVal.Font = Enum.Font.GothamMedium; distVal.TextSize = 11
-distVal.TextXAlignment = Enum.TextXAlignment.Right; distVal.Parent = distRow
-
-local draggingSlider = false
-sliderBg.MouseButton1Down:Connect(function() draggingSlider = true end)
-table.insert(connections, UserInputService.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        draggingSlider = false
-    end
-end))
-table.insert(connections, UserInputService.InputChanged:Connect(function(inp)
-    if draggingSlider and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
-        local mousePos = UserInputService:GetMouseLocation().X
-        local relX = mousePos - sliderBg.AbsolutePosition.X
-        local pct = math.clamp(relX / sliderBg.AbsoluteSize.X, 0, 1)
-        settings.maxDistance = math.floor(50 + (1950 * pct))
-        sliderFill.Size = UDim2.new(pct, 0, 1, 0)
-        distVal.Text = tostring(settings.maxDistance) .. "st"
-    end
-end))
-
-secLabel("KEYBINDS", 20)
-
+secLabel("KEYBINDS", 30)
 local function makeKeybindRow(label, bKey, order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = content
+    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(0.5,0,1,0); l.BackgroundTransparency = 1; l.Text = label
     l.TextColor3 = C.textPri; l.Font = Enum.Font.Gotham; l.TextSize = 12
@@ -597,25 +710,25 @@ local function makeKeybindRow(label, bKey, order)
         end)
     end)
 end
-makeKeybindRow("Toggle ESP", "toggle", 21)
-makeKeybindRow("Hide Panel", "hide", 22)
-
-local div = Instance.new("Frame")
-div.Size = UDim2.new(1,0,0,8); div.BackgroundTransparency = 1; div.LayoutOrder = 30; div.Parent = content
+makeKeybindRow("Toggle ESP", "toggle", 31)
+makeKeybindRow("Hide Panel", "hide", 32)
 
 local unBtn = Instance.new("TextButton")
 unBtn.Size = UDim2.new(1,0,0,28); unBtn.BackgroundColor3 = C.bgSec; unBtn.TextColor3 = C.red
 unBtn.Font = Enum.Font.GothamMedium; unBtn.TextSize = 11; unBtn.Text = "Unload Utilities"
-unBtn.AutoButtonColor = false; unBtn.LayoutOrder = 31; unBtn.Parent = content; corner(unBtn, 4); stroke(unBtn, C.divider, 1)
+unBtn.AutoButtonColor = false; unBtn.LayoutOrder = 40; unBtn.Parent = pageESP; corner(unBtn, 4); stroke(unBtn, C.divider, 1)
 
-local crd = Instance.new("TextLabel")
-crd.Size = UDim2.new(1,0,0,16); crd.BackgroundTransparency = 1
-crd.Text = "FusedHann — v"..SCRIPT_VERSION
-crd.TextColor3 = C.textMut; crd.Font = Enum.Font.Gotham; crd.TextSize = 9
-crd.LayoutOrder = 32; crd.Parent = content
+main.Size = UDim2.new(0, 360, 0, 440)
 
-local totalH = 32 + 12 + lay.AbsoluteContentSize.Y + 12
-main.Size = UDim2.new(0, 230, 0, totalH)
+-- Tab logic
+tabHome.MouseButton1Click:Connect(function()
+    tabHome.TextColor3 = C.accent; tabESP.TextColor3 = C.textMut
+    pageHome.Visible = true; pageESP.Visible = false
+end)
+tabESP.MouseButton1Click:Connect(function()
+    tabESP.TextColor3 = C.accent; tabHome.TextColor3 = C.textMut
+    pageESP.Visible = true; pageHome.Visible = false
+end)
 
 -- ═══════════════════════════════════════════════════════════
 -- Draggable
@@ -638,7 +751,7 @@ table.insert(connections, UserInputService.InputChanged:Connect(function(inp)
 end))
 
 -- ═══════════════════════════════════════════════════════════
--- Keybind Listener (Fixed bug)
+-- Keybind Listener
 -- ═══════════════════════════════════════════════════════════
 table.insert(connections, UserInputService.InputBegan:Connect(function(inp, gp)
     if waitingForBind then return end
@@ -694,5 +807,5 @@ do
         end 
     end
     task.wait(0.4)
-    notify("Lightweight ESP Loaded", C.textPri, 3)
+    notify("Lightweight Utilities Loaded", C.textPri, 3)
 end
