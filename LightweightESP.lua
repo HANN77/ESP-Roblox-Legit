@@ -9,7 +9,7 @@
     Run in-game via any executor.
 ]]
 
-local SCRIPT_VERSION = "2.2"
+local SCRIPT_VERSION = "2.3"
 local MAX_POOL = 24 -- max simultaneous tracked players
 
 -- ═══════════════════════════════════════════════════════════
@@ -556,11 +556,22 @@ local function makeToggle(label, settingKey, order)
     knob.Position = settings[settingKey] and UDim2.new(0,20,0.5,-6) or UDim2.new(0,2,0.5,-6)
     knob.Parent = toggleBg; corner(knob, 6)
 
+    local icon = Instance.new("TextLabel")
+    icon.Size = UDim2.new(1,0,1,0); icon.Position = UDim2.new(0,0,0,-1); icon.BackgroundTransparency = 1
+    icon.Font = Enum.Font.GothamBold; icon.TextSize = 10
+    icon.TextColor3 = settings[settingKey] and C.green or C.red
+    icon.Text = settings[settingKey] and "✓" or "✕"
+    icon.Parent = knob
+
     local function updateVisual(on)
         tw(toggleBg, {BackgroundColor3 = on and C.green or C.red}, 0.2)
         tw(knob, {
             Position = on and UDim2.new(0,20,0.5,-6) or UDim2.new(0,2,0.5,-6)
         }, 0.2)
+        tw(icon, {
+            TextColor3 = on and C.green or C.red
+        }, 0.2)
+        icon.Text = on and "✓" or "✕"
     end
     uiUpdaters[settingKey] = updateVisual
 
