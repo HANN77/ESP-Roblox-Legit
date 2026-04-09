@@ -26,11 +26,12 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/HANN77/ESP-Roblox-Leg
 ## 🎮 Default Keybinds
 
 | Key | Action |
+|-----|--------|
 | `H` | Toggle ESP on/off |
 | `Right Shift` | Show/hide settings panel |
 | `Z` | FOV Zoom (Hold to zoom) |
 
-> All keybinds are **rebindable** from the settings panel.
+> You can customize the key bindings however you like from the settings panel.
 
 ## 🖥️ Settings Panel
 
