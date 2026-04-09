@@ -115,6 +115,7 @@ local function keyName(kc)
     local friendly = {
         LeftShift="L-Shift",RightShift="R-Shift",LeftControl="L-Ctrl",
         RightControl="R-Ctrl",LeftAlt="L-Alt",RightAlt="R-Alt",
+        MouseButton1="MB1",MouseButton2="MB2",MouseButton3="MB3",
     }
     return friendly[kc.Name] or kc.Name
 end
@@ -709,15 +710,18 @@ local function makeKeybindRow(label, bKey, order, parentPage)
         if waitingForBind then return end
         waitingForBind = bKey; btn.Text = "..."; btn.TextColor3 = C.textPri; btn.BackgroundColor3 = C.surfHover
         local bc; bc = UserInputService.InputBegan:Connect(function(inp)
-            if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
+            if inp.UserInputType ~= Enum.UserInputType.Keyboard and not inp.UserInputType.Name:match("MouseButton") then return end
+            
             if inp.KeyCode == Enum.KeyCode.Escape then
                 btn.Text = keyName(keybinds[bKey]); btn.TextColor3 = C.textMut; btn.BackgroundColor3 = C.surface
                 waitingForBind = nil; bc:Disconnect(); return
             end
-            keybinds[bKey] = inp.KeyCode
-            btn.Text = keyName(inp.KeyCode); btn.TextColor3 = C.textMut; btn.BackgroundColor3 = C.surface
+            
+            local bindVal = (inp.UserInputType == Enum.UserInputType.Keyboard) and inp.KeyCode or inp.UserInputType
+            keybinds[bKey] = bindVal
+            btn.Text = keyName(bindVal); btn.TextColor3 = C.textMut; btn.BackgroundColor3 = C.surface
             waitingForBind = nil; bc:Disconnect()
-            notify(label.." -> "..keyName(inp.KeyCode), C.textPri, 2)
+            notify(label.." -> "..keyName(bindVal), C.textPri, 2)
         end)
     end)
 end
@@ -804,25 +808,25 @@ end))
 -- ═══════════════════════════════════════════════════════════
 table.insert(connections, UserInputService.InputBegan:Connect(function(inp, gp)
     if waitingForBind then return end
-    if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
+    if inp.UserInputType ~= Enum.UserInputType.Keyboard and not inp.UserInputType.Name:match("MouseButton") then return end
     if UserInputService:GetFocusedTextBox() then return end
-    if inp.KeyCode == keybinds.toggle then
+    if inp.KeyCode == keybinds.toggle or inp.UserInputType == keybinds.toggle then
         settings.enabled = not settings.enabled
         if uiUpdaters["enabled"] then uiUpdaters["enabled"](settings.enabled) end
         notify("ESP " .. (settings.enabled and "Enabled" or "Disabled"), C.accent)
-    elseif inp.KeyCode == keybinds.hide then
+    elseif inp.KeyCode == keybinds.hide or inp.UserInputType == keybinds.hide then
         gui.Enabled = not gui.Enabled
         notify(gui.Enabled and "Panel Visible" or "Panel Hidden", C.accent, 1.5)
-    elseif inp.KeyCode == keybinds.zoom and settings.zoomEnabled then
+    elseif (inp.KeyCode == keybinds.zoom or inp.UserInputType == keybinds.zoom) and settings.zoomEnabled then
         tw(Camera, {FieldOfView = settings.zoomFOV}, 0.25)
     end
 end))
 
 table.insert(connections, UserInputService.InputEnded:Connect(function(inp, gp)
     if waitingForBind then return end
-    if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
+    if inp.UserInputType ~= Enum.UserInputType.Keyboard and not inp.UserInputType.Name:match("MouseButton") then return end
     if UserInputService:GetFocusedTextBox() then return end
-    if inp.KeyCode == keybinds.zoom and settings.zoomEnabled then
+    if (inp.KeyCode == keybinds.zoom or inp.UserInputType == keybinds.zoom) and settings.zoomEnabled then
         tw(Camera, {FieldOfView = 70}, 0.3)
     end
 end))
