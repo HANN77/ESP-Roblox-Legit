@@ -9,7 +9,7 @@
     Run in-game via any executor.
 ]]
 
-local SCRIPT_VERSION = "2.6"
+local SCRIPT_VERSION = "2.7"
 local MAX_POOL = 24 -- max simultaneous tracked players
 
 -- ═══════════════════════════════════════════════════════════
@@ -20,6 +20,7 @@ local RunService    = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService  = game:GetService("TweenService")
 local CoreGui       = game:GetService("CoreGui")
+local HttpService   = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera      = workspace.CurrentCamera
@@ -37,6 +38,11 @@ end
 -- ═══════════════════════════════════════════════════════════
 local running    = true
 local connections = {}
+
+pcall(function()
+    if not isfolder("LightweightESP") then makefolder("LightweightESP") end
+    if not isfolder("LightweightESP/Configs") then makefolder("LightweightESP/Configs") end
+end)
 
 local settings = {
     enabled      = true,
@@ -461,7 +467,7 @@ tbMask.Size = UDim2.new(1,0,0,10); tbMask.Position = UDim2.new(0,0,1,-10)
 tbMask.BackgroundColor3 = C.bgSec; tbMask.BorderSizePixel = 0; tbMask.Parent = tBar
 stroke(tBar, C.divider, 1)
 
-local tabs = {"Home", "Visual", "Combat"}
+local tabs = {"Home", "Visual", "Combat", "Config"}
 local tabBtns = {}
 local w = 1 / #tabs
 
@@ -532,6 +538,16 @@ pageCombat.AutomaticCanvasSize = Enum.AutomaticSize.Y
 pad(pageCombat, 10, 10, 14, 14)
 local cLay = Instance.new("UIListLayout", pageCombat)
 cLay.SortOrder = Enum.SortOrder.LayoutOrder; cLay.Padding = UDim.new(0, 6)
+
+-- Config Page
+local pageConfig = Instance.new("ScrollingFrame", pageContainer)
+pageConfig.Size = UDim2.new(1,0,1,0); pageConfig.BackgroundTransparency = 1; pageConfig.Visible = false
+pageConfig.ScrollBarThickness = 2; pageConfig.ScrollBarImageColor3 = C.divider
+pageConfig.CanvasSize = UDim2.new(0,320,0,1200)
+pageConfig.AutomaticCanvasSize = Enum.AutomaticSize.Y
+pad(pageConfig, 10, 10, 14, 14)
+local cfgLay = Instance.new("UIListLayout", pageConfig)
+cfgLay.SortOrder = Enum.SortOrder.LayoutOrder; cfgLay.Padding = UDim.new(0, 10)
 
 local uiUpdaters = {}
 
@@ -756,6 +772,9 @@ local function makeKeybindRow(label, bKey, order, parentPage)
             notify(label.." -> "..keyName(bindVal), C.textPri, 2)
         end)
     end)
+    uiUpdaters["bind_"..bKey] = function()
+        btn.Text = keyName(keybinds[bKey])
+    end
 end
 
 secLabel("KEYBINDS", 1)
@@ -786,6 +805,99 @@ makeToggle("Enable Zoom", "zoomEnabled", 2, pageCombat)
 makeKeybindRow("Zoom Key", "zoom", 3, pageCombat)
 makeSlider("Zoom FOV", "zoomFOV", 10, 120, false, 4, pageCombat)
 
+-- ═══════════════════════════════════════════════════════════
+-- Config System logic
+-- ═══════════════════════════════════════════════════════════
+local function saveConfig(cfgName)
+    local data = { settings = {}, keybinds = {} }
+    for k,v in pairs(settings) do
+        if typeof(v) == "Color3" then
+            data.settings[k] = {type="Color3", hex=v:ToHex()}
+        else
+            data.settings[k] = v
+        end
+    end
+    for k,v in pairs(keybinds) do
+        data.keybinds[k] = {type=tostring(v.EnumType), name=v.Name}
+    end
+    pcall(function()
+        writefile("LightweightESP/Configs/"..cfgName..".json", HttpService:JSONEncode(data))
+        notify("Saved Config: " .. cfgName, C.green)
+    end)
+end
+
+local function loadConfig(cfgName)
+    local success, json = pcall(function() return readfile("LightweightESP/Configs/"..cfgName..".json") end)
+    if not success or not json then 
+        notify("Config not found!", C.red)
+        return 
+    end
+    
+    local s2, data = pcall(function() return HttpService:JSONDecode(json) end)
+    if not s2 or type(data) ~= "table" then
+        notify("Config Corrupted", C.red)
+        return
+    end
+    
+    if data.settings then
+        for k,v in pairs(data.settings) do
+            if type(v) == "table" and v.type == "Color3" then
+                settings[k] = Color3.fromHex(v.hex)
+            else
+                settings[k] = v
+            end
+            if uiUpdaters[k] then uiUpdaters[k](settings[k]) end
+        end
+    end
+    
+    if data.keybinds then
+        for k,v in pairs(data.keybinds) do
+            if v.type == "Enum.KeyCode" and Enum.KeyCode[v.name] then
+                keybinds[k] = Enum.KeyCode[v.name]
+            elseif v.type == "Enum.UserInputType" and Enum.UserInputType[v.name] then
+                keybinds[k] = Enum.UserInputType[v.name]
+            end
+            if uiUpdaters["bind_"..k] then uiUpdaters["bind_"..k]() end
+        end
+    end
+    notify("Loaded Config: " .. cfgName, C.accent)
+end
+
+secLabel("PROFILE MANAGEMENT", 1, pageConfig)
+
+local cfgBoxRow = Instance.new("Frame", pageConfig)
+cfgBoxRow.Size = UDim2.new(1,0,0,30); cfgBoxRow.BackgroundTransparency = 1; cfgBoxRow.LayoutOrder = 2
+local cfgBox = Instance.new("TextBox", cfgBoxRow)
+cfgBox.Size = UDim2.new(1,0,1,0); cfgBox.BackgroundColor3 = C.surface
+cfgBox.TextColor3 = C.textPri; cfgBox.Font = Enum.Font.GothamMedium
+cfgBox.TextSize = 12; cfgBox.PlaceholderText = "Config Name..."
+cfgBox.Text = "legit"
+corner(cfgBox, 4); stroke(cfgBox, C.divider, 1)
+
+local cfgSaveRow = Instance.new("Frame", pageConfig)
+cfgSaveRow.Size = UDim2.new(1,0,0,30); cfgSaveRow.BackgroundTransparency = 1; cfgSaveRow.LayoutOrder = 3
+local btnSave = Instance.new("TextButton", cfgSaveRow)
+btnSave.Size = UDim2.new(1,0,1,0); btnSave.BackgroundColor3 = C.bgSec
+btnSave.TextColor3 = C.green; btnSave.Font = Enum.Font.GothamBold; btnSave.TextSize = 12
+btnSave.Text = "Save Config"; corner(btnSave, 4); stroke(btnSave, C.green, 1)
+btnSave.MouseButton1Click:Connect(function() 
+    if cfgBox.Text ~= "" then saveConfig(cfgBox.Text) end 
+end)
+
+local cfgLoadRow = Instance.new("Frame", pageConfig)
+cfgLoadRow.Size = UDim2.new(1,0,0,30); cfgLoadRow.BackgroundTransparency = 1; cfgLoadRow.LayoutOrder = 4
+local btnLoad = Instance.new("TextButton", cfgLoadRow)
+btnLoad.Size = UDim2.new(1,0,1,0); btnLoad.BackgroundColor3 = C.bgSec
+btnLoad.TextColor3 = C.textPri; btnLoad.Font = Enum.Font.GothamMedium; btnLoad.TextSize = 12
+btnLoad.Text = "Load Config"; corner(btnLoad, 4); stroke(btnLoad, C.divider, 1)
+btnLoad.MouseButton1Click:Connect(function() 
+    if cfgBox.Text ~= "" then loadConfig(cfgBox.Text) end 
+end)
+
+if type(writefile) ~= "function" then
+    secLabel("⚠️ Executor does not support saving files.", 5, pageConfig)
+end
+
 local unBtn = Instance.new("TextButton")
 unBtn.Size = UDim2.new(1,0,0,28); unBtn.BackgroundColor3 = C.bgSec; unBtn.TextColor3 = C.red
 unBtn.Font = Enum.Font.GothamMedium; unBtn.TextSize = 11; unBtn.Text = "Unload Utilities"
@@ -801,6 +913,7 @@ for tName, btn in pairs(tabBtns) do
         pageHome.Visible = (tName == "Home")
         pageESP.Visible = (tName == "Visual")
         pageCombat.Visible = (tName == "Combat")
+        pageConfig.Visible = (tName == "Config")
     end)
 end
 

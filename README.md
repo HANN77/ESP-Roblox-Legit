@@ -1,4 +1,4 @@
-# 👁 Lightweight ESP v2.6
+# 👁 Lightweight ESP v2.7
 
 A lightweight, low-level executor compatible ESP script for Roblox. Designed for **minimal performance impact** and **maximum compatibility** — no Drawing library or high-UNC functions required.
 
@@ -49,6 +49,7 @@ The draggable GUI panel lets you toggle each feature individually:
 - 🔧 Keybind remapping
 - 🎯 Enable Zoom (Combat Tab)
 - 🔧 Zoom FOV magnitude
+- 💾 Config Save/Load System (JSON serialization)
 - ⏻ Unload button for clean teardown
 
 ## 🔧 Why Low-Level Executor Compatible?
