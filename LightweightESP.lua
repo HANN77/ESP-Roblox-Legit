@@ -1,5 +1,5 @@
 --[[
-    Lightweight ESP v1.0 — by FusedHann
+    Lightweight ESP v2.0 — by FusedHann
     ─────────────────────────────────────
     • Works on LOW-LEVEL executors (no Drawing lib, no UNC)
     • Uses only native Roblox instances + Camera:WorldToViewportPoint
@@ -9,7 +9,7 @@
     Run in-game via any executor.
 ]]
 
-local SCRIPT_VERSION = "1.0"
+local SCRIPT_VERSION = "2.0"
 local MAX_POOL = 24 -- max simultaneous tracked players
 
 -- ═══════════════════════════════════════════════════════════
