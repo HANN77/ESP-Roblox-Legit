@@ -60,21 +60,21 @@ local waitingForBind = nil
 -- Color Palette (matches AutoClicker style)
 -- ═══════════════════════════════════════════════════════════
 local C = {
-    bg           = Color3.fromRGB(22, 22, 30),
-    bgSec        = Color3.fromRGB(28, 28, 40),
-    surface      = Color3.fromRGB(35, 35, 50),
-    surfHover    = Color3.fromRGB(45, 45, 62),
-    accent       = Color3.fromRGB(110, 90, 255),
-    accentGlow   = Color3.fromRGB(140, 120, 255),
-    green        = Color3.fromRGB(50, 205, 100),
-    red          = Color3.fromRGB(235, 70, 80),
+    bg           = Color3.fromRGB(18, 18, 18),    -- Dark minimalist window
+    bgSec        = Color3.fromRGB(24, 24, 24),    -- Header & secondary
+    surface      = Color3.fromRGB(32, 32, 32),    -- UI elements
+    surfHover    = Color3.fromRGB(42, 42, 42),
+    accent       = Color3.fromRGB(240, 240, 240), -- Sleek white/gray accent
+    accentGlow   = Color3.fromRGB(255, 255, 255),
+    green        = Color3.fromRGB(50, 205, 100),  -- (Used for ESP Health)
+    red          = Color3.fromRGB(235, 70, 80),   -- (Used for ESP Radar/Health)
     orange       = Color3.fromRGB(255, 160, 50),
-    cyan         = Color3.fromRGB(0, 200, 255),
-    magenta      = Color3.fromRGB(255, 60, 180),
-    yellow       = Color3.fromRGB(255, 220, 50),
-    textPri      = Color3.fromRGB(240, 240, 250),
-    textMut      = Color3.fromRGB(140, 140, 165),
-    divider      = Color3.fromRGB(50, 50, 70),
+    cyan         = Color3.fromRGB(0, 200, 255),   -- (Used for ESP Team)
+    magenta      = Color3.fromRGB(255, 60, 180),  -- (Used for ESP Chams)
+    yellow       = Color3.fromRGB(255, 220, 50),  -- (Used for ESP Health)
+    textPri      = Color3.fromRGB(245, 245, 245),
+    textMut      = Color3.fromRGB(150, 150, 150),
+    divider      = Color3.fromRGB(40, 40, 40),
 }
 
 -- ═══════════════════════════════════════════════════════════
@@ -431,205 +431,191 @@ pcall(function() if typeof(syn)=="table" and syn.protect_gui then syn.protect_gu
 gui.Parent = CoreGui
 
 local main = Instance.new("Frame")
-main.Name = "M"; main.Size = UDim2.new(0, 220, 0, 0)
+main.Name = "M"; main.Size = UDim2.new(0, 230, 0, 0)
 main.Position = UDim2.new(0, 14, 0.5, -200)
 main.BackgroundColor3 = C.bg; main.BorderSizePixel = 0; main.ClipsDescendants = true
-main.Active = true; main.Parent = gui; corner(main, 12); stroke(main, C.accent, 1.5)
+main.Active = true; main.Parent = gui; corner(main, 6); stroke(main, C.divider, 1)
 
 -- Shadow
 local sh = Instance.new("Frame")
-sh.Size = UDim2.new(1,8,1,8); sh.Position = UDim2.new(0,-4,0,-4)
-sh.BackgroundColor3 = Color3.new(0,0,0); sh.BackgroundTransparency = 0.7
+sh.Size = UDim2.new(1,14,1,14); sh.Position = UDim2.new(0,-7,0,-7)
+sh.BackgroundColor3 = Color3.new(0,0,0); sh.BackgroundTransparency = 0.8
 sh.BorderSizePixel = 0; sh.ZIndex = -1; sh.Parent = main; corner(sh, 14)
 
 -- Title bar
 local tBar = Instance.new("Frame")
-tBar.Size = UDim2.new(1,0,0,36); tBar.BackgroundColor3 = C.bgSec
-tBar.BorderSizePixel = 0; tBar.Parent = main; corner(tBar, 12)
+tBar.Size = UDim2.new(1,0,0,32); tBar.BackgroundColor3 = C.bgSec
+tBar.BorderSizePixel = 0; tBar.Parent = main; corner(tBar, 6)
+
 local tbMask = Instance.new("Frame")
-tbMask.Size = UDim2.new(1,0,0,14); tbMask.Position = UDim2.new(0,0,1,-14)
+tbMask.Size = UDim2.new(1,0,0,10); tbMask.Position = UDim2.new(0,0,1,-10)
 tbMask.BackgroundColor3 = C.bgSec; tbMask.BorderSizePixel = 0; tbMask.Parent = tBar
-local aLine = Instance.new("Frame")
-aLine.Size = UDim2.new(0.6,0,0,2); aLine.Position = UDim2.new(0.2,0,1,-1)
-aLine.BackgroundColor3 = C.accent; aLine.BorderSizePixel = 0; aLine.Parent = tBar; corner(aLine,1)
 
 local titleLbl = Instance.new("TextLabel")
-titleLbl.Size = UDim2.new(1,-50,1,0); titleLbl.Position = UDim2.new(0,10,0,0)
-titleLbl.BackgroundTransparency = 1; titleLbl.Text = "👁 ESP v" .. SCRIPT_VERSION
-titleLbl.TextColor3 = C.textPri; titleLbl.Font = Enum.Font.GothamBold
-titleLbl.TextSize = 13; titleLbl.TextXAlignment = Enum.TextXAlignment.Left; titleLbl.Parent = tBar
+titleLbl.Size = UDim2.new(1,-20,1,0); titleLbl.Position = UDim2.new(0,12,0,0)
+titleLbl.BackgroundTransparency = 1; titleLbl.Text = "Lightweight ESP"
+titleLbl.TextColor3 = C.textPri; titleLbl.Font = Enum.Font.GothamMedium
+titleLbl.TextSize = 12; titleLbl.TextXAlignment = Enum.TextXAlignment.Left; titleLbl.Parent = tBar
 
-local sDot = Instance.new("Frame")
-sDot.Size = UDim2.new(0,8,0,8); sDot.Position = UDim2.new(1,-46,0.5,-4)
-sDot.BackgroundColor3 = C.green; sDot.BorderSizePixel = 0; sDot.Parent = tBar; corner(sDot,4)
-
-local sLbl = Instance.new("TextLabel")
-sLbl.Size = UDim2.new(0,30,1,0); sLbl.Position = UDim2.new(1,-35,0,0)
-sLbl.BackgroundTransparency = 1; sLbl.Text = "ON"; sLbl.TextColor3 = C.green
-sLbl.Font = Enum.Font.GothamBold; sLbl.TextSize = 10; sLbl.TextXAlignment = Enum.TextXAlignment.Left
-sLbl.Parent = tBar
-
--- Content
 local content = Instance.new("Frame")
-content.Size = UDim2.new(1,0,0,400); content.Position = UDim2.new(0,0,0,38)
-content.BackgroundTransparency = 1; content.Parent = main; pad(content, 6, 6, 10, 10)
+content.Size = UDim2.new(1,0,0,400); content.Position = UDim2.new(0,0,0,32)
+content.BackgroundTransparency = 1; content.Parent = main; pad(content, 8, 8, 12, 12)
 local lay = Instance.new("UIListLayout")
-lay.SortOrder = Enum.SortOrder.LayoutOrder; lay.Padding = UDim.new(0,4); lay.Parent = content
+lay.SortOrder = Enum.SortOrder.LayoutOrder; lay.Padding = UDim.new(0,6); lay.Parent = content
 
--- Section label helper
+local uiUpdaters = {}
+
 local function secLabel(text, order)
     local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1,0,0,14); l.BackgroundTransparency = 1; l.Text = text
-    l.TextColor3 = C.textMut; l.Font = Enum.Font.GothamBold; l.TextSize = 9
+    l.Size = UDim2.new(1,0,0,16); l.BackgroundTransparency = 1; l.Text = text
+    l.TextColor3 = C.textMut; l.Font = Enum.Font.GothamMedium; l.TextSize = 10
     l.TextXAlignment = Enum.TextXAlignment.Left; l.LayoutOrder = order; l.Parent = content
 end
 
--- Toggle row helper
-local function makeToggle(label, settingKey, order, col)
+local function makeToggle(label, settingKey, order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1,0,0,24); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = content
+    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = content
 
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(0.65,0,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
-    lbl.TextColor3 = C.textPri; lbl.Font = Enum.Font.Gotham; lbl.TextSize = 11
+    lbl.TextColor3 = C.textPri; lbl.Font = Enum.Font.Gotham; lbl.TextSize = 12
     lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = row
 
     local toggleBg = Instance.new("TextButton")
-    toggleBg.Size = UDim2.new(0,36,0,18); toggleBg.Position = UDim2.new(1,-36,0.5,-9)
-    toggleBg.BackgroundColor3 = settings[settingKey] and (col or C.green) or C.surface
+    toggleBg.Size = UDim2.new(0,34,0,16); toggleBg.Position = UDim2.new(1,-34,0.5,-8)
+    toggleBg.BackgroundColor3 = settings[settingKey] and C.accent or C.surface
     toggleBg.BorderSizePixel = 0; toggleBg.Text = ""; toggleBg.AutoButtonColor = false
-    toggleBg.Parent = row; corner(toggleBg, 9)
+    toggleBg.Parent = row; corner(toggleBg, 8)
 
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0,14,0,14); knob.BackgroundColor3 = C.textPri; knob.BorderSizePixel = 0
-    knob.Position = settings[settingKey] and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)
-    knob.Parent = toggleBg; corner(knob, 7)
+    knob.Size = UDim2.new(0,12,0,12); knob.BackgroundColor3 = settings[settingKey] and C.bg or C.textPri; knob.BorderSizePixel = 0
+    knob.Position = settings[settingKey] and UDim2.new(1,-14,0.5,-6) or UDim2.new(0,2,0.5,-6)
+    knob.Parent = toggleBg; corner(knob, 6)
+
+    local function updateVisual(on)
+        tw(toggleBg, {BackgroundColor3 = on and C.accent or C.surface}, 0.2)
+        tw(knob, {
+            Position = on and UDim2.new(1,-14,0.5,-6) or UDim2.new(0,2,0.5,-6),
+            BackgroundColor3 = on and C.bg or C.textPri
+        }, 0.2)
+    end
+    uiUpdaters[settingKey] = updateVisual
 
     toggleBg.MouseButton1Click:Connect(function()
         settings[settingKey] = not settings[settingKey]
         local on = settings[settingKey]
-        tw(toggleBg, {BackgroundColor3 = on and (col or C.green) or C.surface}, 0.2)
-        tw(knob, {Position = on and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)}, 0.2)
-
-        if settingKey == "enabled" then
-            sDot.BackgroundColor3 = on and C.green or C.red
-            sLbl.TextColor3 = on and C.green or C.red
-            sLbl.Text = on and "ON" or "OFF"
-        end
+        updateVisual(on)
         if settingKey == "radar" then radarFrame.Visible = on end
-
-        notify(label .. ": " .. (on and "ON" or "OFF"), on and C.green or C.red, 1.5)
+        notify(label .. (on and " On" or " Off"), C.accent, 1.5)
     end)
-    return toggleBg
+    return row
 end
 
--- Build settings UI
 secLabel("VISUALS", 1)
-makeToggle("ESP Enabled", "enabled", 2, C.accent)
+makeToggle("ESP Enabled", "enabled", 2)
 makeToggle("Tracers", "tracers", 3)
 makeToggle("Health Bars", "healthBars", 4)
-makeToggle("Highlight", "highlight", 5, C.magenta)
+makeToggle("Highlight", "highlight", 5)
 makeToggle("Names", "names", 6)
 makeToggle("Distance", "distance", 7)
-makeToggle("Radar", "radar", 8, C.cyan)
+makeToggle("Radar", "radar", 8)
 
 secLabel("FILTERS", 11)
-makeToggle("Exclude Team", "teamCheck", 12, C.orange)
+makeToggle("Exclude Team", "teamCheck", 12)
 
--- Distance slider
-secLabel("MAX DISTANCE: " .. settings.maxDistance, 13)
+secLabel("MAX DISTANCE", 13)
 local distRow = Instance.new("Frame")
-distRow.Size = UDim2.new(1,0,0,26); distRow.BackgroundTransparency = 1; distRow.LayoutOrder = 14; distRow.Parent = content
+distRow.Size = UDim2.new(1,0,0,24); distRow.BackgroundTransparency = 1; distRow.LayoutOrder = 14; distRow.Parent = content
 
-local distMinus = Instance.new("TextButton")
-distMinus.Size = UDim2.new(0,26,1,0); distMinus.BackgroundColor3 = C.surface; distMinus.TextColor3 = C.textPri
-distMinus.Font = Enum.Font.GothamBold; distMinus.TextSize = 16; distMinus.Text = "−"
-distMinus.AutoButtonColor = false; distMinus.Parent = distRow; corner(distMinus, 6)
+local sliderBg = Instance.new("TextButton")
+sliderBg.Size = UDim2.new(0.65,0,0,4); sliderBg.Position = UDim2.new(0,0,0.5,-2)
+sliderBg.BackgroundColor3 = C.surface; sliderBg.BorderSizePixel = 0; sliderBg.Text = ""
+sliderBg.AutoButtonColor = false; sliderBg.Parent = distRow; corner(sliderBg, 2)
 
-local distBox = Instance.new("TextBox")
-distBox.Size = UDim2.new(1,-58,1,0); distBox.Position = UDim2.new(0,30,0,0)
-distBox.Text = tostring(settings.maxDistance); distBox.PlaceholderText = "studs"
-distBox.BackgroundColor3 = C.surface; distBox.TextColor3 = C.textPri
-distBox.Font = Enum.Font.GothamBold; distBox.TextSize = 12; distBox.Parent = distRow
-corner(distBox, 6); stroke(distBox)
+local sliderFill = Instance.new("Frame")
+sliderFill.BackgroundColor3 = C.accent; sliderFill.BorderSizePixel = 0
+sliderFill.Size = UDim2.new((settings.maxDistance - 50) / 1950, 0, 1, 0)
+sliderFill.Parent = sliderBg; corner(sliderFill, 2)
 
-local distPlus = Instance.new("TextButton")
-distPlus.Size = UDim2.new(0,26,1,0); distPlus.Position = UDim2.new(1,-26,0,0)
-distPlus.BackgroundColor3 = C.surface; distPlus.TextColor3 = C.textPri
-distPlus.Font = Enum.Font.GothamBold; distPlus.TextSize = 16; distPlus.Text = "+"
-distPlus.AutoButtonColor = false; distPlus.Parent = distRow; corner(distPlus, 6)
+local dragKnob = Instance.new("Frame")
+dragKnob.Size = UDim2.new(0,10,0,10); dragKnob.BackgroundColor3 = C.accent; dragKnob.BorderSizePixel = 0
+dragKnob.AnchorPoint = Vector2.new(0.5,0.5); dragKnob.Position = UDim2.new(1, 0, 0.5, 0)
+dragKnob.Parent = sliderFill; corner(dragKnob, 5)
 
--- Distance label reference for updating text
-local distSecLabel
-for _, ch in ipairs(content:GetChildren()) do
-    if ch:IsA("TextLabel") and ch.Text:find("MAX DISTANCE") then distSecLabel = ch break end
-end
+local distVal = Instance.new("TextLabel")
+distVal.Size = UDim2.new(0.3,0,1,0); distVal.Position = UDim2.new(0.7,0,0,0)
+distVal.BackgroundTransparency = 1; distVal.Text = tostring(settings.maxDistance) .. "st"
+distVal.TextColor3 = C.textPri; distVal.Font = Enum.Font.GothamMedium; distVal.TextSize = 11
+distVal.TextXAlignment = Enum.TextXAlignment.Right; distVal.Parent = distRow
 
-local function setDist(v)
-    v = math.clamp(math.floor(v), 50, 2000)
-    settings.maxDistance = v; distBox.Text = tostring(v)
-    if distSecLabel then distSecLabel.Text = "MAX DISTANCE: " .. v end
-end
-distMinus.MouseButton1Click:Connect(function() setDist(settings.maxDistance - 50) end)
-distPlus.MouseButton1Click:Connect(function() setDist(settings.maxDistance + 50) end)
-distBox.FocusLost:Connect(function()
-    local v = tonumber(distBox.Text)
-    if v then setDist(v) else distBox.Text = tostring(settings.maxDistance) end
-end)
+local draggingSlider = false
+sliderBg.MouseButton1Down:Connect(function() draggingSlider = true end)
+table.insert(connections, UserInputService.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = false
+    end
+end))
+table.insert(connections, UserInputService.InputChanged:Connect(function(inp)
+    if draggingSlider and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+        local mousePos = UserInputService:GetMouseLocation().X
+        local relX = mousePos - sliderBg.AbsolutePosition.X
+        local pct = math.clamp(relX / sliderBg.AbsoluteSize.X, 0, 1)
+        settings.maxDistance = math.floor(50 + (1950 * pct))
+        sliderFill.Size = UDim2.new(pct, 0, 1, 0)
+        distVal.Text = tostring(settings.maxDistance) .. "st"
+    end
+end))
 
--- Keybinds section
 secLabel("KEYBINDS", 20)
 
 local function makeKeybindRow(label, bKey, order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1,0,0,24); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = content
+    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = content
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(0.5,0,1,0); l.BackgroundTransparency = 1; l.Text = label
-    l.TextColor3 = C.textMut; l.Font = Enum.Font.Gotham; l.TextSize = 11
+    l.TextColor3 = C.textPri; l.Font = Enum.Font.Gotham; l.TextSize = 12
     l.TextXAlignment = Enum.TextXAlignment.Left; l.Parent = row
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.45,0,0,20); btn.Position = UDim2.new(0.55,0,0,2)
-    btn.BackgroundColor3 = C.surface; btn.TextColor3 = C.orange; btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 11; btn.Text = "[ "..keyName(keybinds[bKey]).." ]"; btn.AutoButtonColor = false
-    btn.Parent = row; corner(btn, 6); stroke(btn)
+    btn.Size = UDim2.new(0.45,0,0,22); btn.Position = UDim2.new(0.55,0,0,2)
+    btn.BackgroundColor3 = C.surface; btn.TextColor3 = C.textMut; btn.Font = Enum.Font.GothamMedium
+    btn.TextSize = 10; btn.Text = keyName(keybinds[bKey]); btn.AutoButtonColor = false
+    btn.Parent = row; corner(btn, 4); stroke(btn, C.divider, 1)
+    
     btn.MouseButton1Click:Connect(function()
         if waitingForBind then return end
-        waitingForBind = bKey; btn.Text = "[ ... ]"; btn.TextColor3 = C.accentGlow
+        waitingForBind = bKey; btn.Text = "..."; btn.TextColor3 = C.textPri; btn.BackgroundColor3 = C.surfHover
         local bc; bc = UserInputService.InputBegan:Connect(function(inp)
             if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
             if inp.KeyCode == Enum.KeyCode.Escape then
-                btn.Text = "[ "..keyName(keybinds[bKey]).." ]"; btn.TextColor3 = C.orange
+                btn.Text = keyName(keybinds[bKey]); btn.TextColor3 = C.textMut; btn.BackgroundColor3 = C.surface
                 waitingForBind = nil; bc:Disconnect(); return
             end
             keybinds[bKey] = inp.KeyCode
-            btn.Text = "[ "..keyName(inp.KeyCode).." ]"; btn.TextColor3 = C.orange
+            btn.Text = keyName(inp.KeyCode); btn.TextColor3 = C.textMut; btn.BackgroundColor3 = C.surface
             waitingForBind = nil; bc:Disconnect()
-            notify(label.." → ["..keyName(inp.KeyCode).."]", C.orange, 2)
+            notify(label.." -> "..keyName(inp.KeyCode), C.textPri, 2)
         end)
     end)
 end
 makeKeybindRow("Toggle ESP", "toggle", 21)
 makeKeybindRow("Hide Panel", "hide", 22)
 
--- Divider + Unload
 local div = Instance.new("Frame")
-div.Size = UDim2.new(1,0,0,6); div.BackgroundTransparency = 1; div.LayoutOrder = 30; div.Parent = content
-local unBtn = Instance.new("TextButton")
-unBtn.Size = UDim2.new(1,0,0,28); unBtn.BackgroundColor3 = C.surface; unBtn.TextColor3 = C.red
-unBtn.Font = Enum.Font.GothamBold; unBtn.TextSize = 11; unBtn.Text = "⏻  Unload ESP"
-unBtn.AutoButtonColor = false; unBtn.LayoutOrder = 31; unBtn.Parent = content; corner(unBtn, 8)
+div.Size = UDim2.new(1,0,0,8); div.BackgroundTransparency = 1; div.LayoutOrder = 30; div.Parent = content
 
--- Credit
+local unBtn = Instance.new("TextButton")
+unBtn.Size = UDim2.new(1,0,0,28); unBtn.BackgroundColor3 = C.bgSec; unBtn.TextColor3 = C.red
+unBtn.Font = Enum.Font.GothamMedium; unBtn.TextSize = 11; unBtn.Text = "Unload Utilities"
+unBtn.AutoButtonColor = false; unBtn.LayoutOrder = 31; unBtn.Parent = content; corner(unBtn, 4); stroke(unBtn, C.divider, 1)
+
 local crd = Instance.new("TextLabel")
-crd.Size = UDim2.new(1,0,0,14); crd.BackgroundTransparency = 1
-crd.Text = "by FusedHann · v"..SCRIPT_VERSION
-crd.TextColor3 = Color3.fromRGB(60,60,80); crd.Font = Enum.Font.Gotham; crd.TextSize = 9
+crd.Size = UDim2.new(1,0,0,16); crd.BackgroundTransparency = 1
+crd.Text = "FusedHann — v"..SCRIPT_VERSION
+crd.TextColor3 = C.textMut; crd.Font = Enum.Font.Gotham; crd.TextSize = 9
 crd.LayoutOrder = 32; crd.Parent = content
 
--- Finalize height
-local totalH = 38 + 12 + lay.AbsoluteContentSize.Y + 12
-totalH = math.max(totalH, 420)
-main.Size = UDim2.new(0, 220, 0, totalH)
+local totalH = 32 + 12 + lay.AbsoluteContentSize.Y + 12
+main.Size = UDim2.new(0, 230, 0, totalH)
 
 -- ═══════════════════════════════════════════════════════════
 -- Draggable
@@ -652,7 +638,7 @@ table.insert(connections, UserInputService.InputChanged:Connect(function(inp)
 end))
 
 -- ═══════════════════════════════════════════════════════════
--- Keybind Listener
+-- Keybind Listener (Fixed bug)
 -- ═══════════════════════════════════════════════════════════
 table.insert(connections, UserInputService.InputBegan:Connect(function(inp, gp)
     if waitingForBind then return end
@@ -660,10 +646,8 @@ table.insert(connections, UserInputService.InputBegan:Connect(function(inp, gp)
     if UserInputService:GetFocusedTextBox() then return end
     if inp.KeyCode == keybinds.toggle then
         settings.enabled = not settings.enabled
-        local on = settings.enabled
-        sDot.BackgroundColor3 = on and C.green or C.red
-        sLbl.TextColor3 = on and C.green or C.red; sLbl.Text = on and "ON" or "OFF"
-        notify("ESP " .. (on and "Enabled ✓" or "Disabled ✗"), on and C.green or C.red)
+        if uiUpdaters["enabled"] then uiUpdaters["enabled"](settings.enabled) end
+        notify("ESP " .. (settings.enabled and "Enabled" or "Disabled"), C.accent)
     elseif inp.KeyCode == keybinds.hide then
         gui.Enabled = not gui.Enabled
         notify(gui.Enabled and "Panel Visible" or "Panel Hidden", C.accent, 1.5)
@@ -674,7 +658,7 @@ end))
 -- Unload
 -- ═══════════════════════════════════════════════════════════
 local function unload()
-    notify("ESP Unloaded — Goodbye!", C.red, 1.5)
+    notify("Utilities Unloaded", C.textMut, 1.5)
     task.wait(0.4); running = false
     for _, cn in ipairs(connections) do pcall(function() cn:Disconnect() end) end
     connections = {}
@@ -697,10 +681,18 @@ unBtn.MouseButton1Click:Connect(unload)
 -- ═══════════════════════════════════════════════════════════
 do
     local tp = main.Position
-    main.Position = UDim2.new(tp.X.Scale, tp.X.Offset, tp.Y.Scale, tp.Y.Offset - 40)
+    main.Position = UDim2.new(tp.X.Scale, tp.X.Offset, tp.Y.Scale, tp.Y.Offset - 20)
     main.BackgroundTransparency = 0.5
+    for _, ch in ipairs(main:GetDescendants()) do if ch:IsA("GuiObject") then ch.BackgroundTransparency = 1 end end
     task.wait(0.05)
-    tw(main, {Position = tp, BackgroundTransparency = 0}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    tw(main, {Position = tp, BackgroundTransparency = 0}, 0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    for _, ch in ipairs(main:GetDescendants()) do 
+        if ch:IsA("GuiObject") and ch.Name ~= "M" then 
+            local def = ch.BackgroundTransparency
+            ch.BackgroundTransparency = 1
+            tw(ch, {BackgroundTransparency = def}, 0.6) 
+        end 
+    end
     task.wait(0.4)
-    notify("👁 ESP v"..SCRIPT_VERSION.." Loaded", C.accent, 3)
+    notify("Lightweight ESP Loaded", C.textPri, 3)
 end
