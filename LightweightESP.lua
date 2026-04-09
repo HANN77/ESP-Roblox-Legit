@@ -513,7 +513,8 @@ makeText(pageHome, "github.com/HANN77", 11, Enum.Font.Gotham, C.textMut, 8)
 local pageESP = Instance.new("ScrollingFrame", pageContainer)
 pageESP.Size = UDim2.new(1,0,1,0); pageESP.BackgroundTransparency = 1; pageESP.Visible = false
 pageESP.ScrollBarThickness = 2; pageESP.ScrollBarImageColor3 = C.divider
-pageESP.CanvasSize = UDim2.new(0,320,0,760)
+pageESP.CanvasSize = UDim2.new(0,320,0,1200)
+pageESP.AutomaticCanvasSize = Enum.AutomaticSize.Y
 pad(pageESP, 10, 10, 14, 14)
 local eLay = Instance.new("UIListLayout", pageESP)
 eLay.SortOrder = Enum.SortOrder.LayoutOrder; eLay.Padding = UDim.new(0, 6)
@@ -594,8 +595,9 @@ local function makeSlider(label, settingKey, min, max, isFloat, order)
     lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = row
 
     local sliderBg = Instance.new("Frame")
-    sliderBg.Size = UDim2.new(0,114,0,4); sliderBg.Position = UDim2.new(0,140,0.5,-2)
-    sliderBg.BackgroundColor3 = C.surface; sliderBg.BorderSizePixel = 0; sliderBg.Parent = row; corner(sliderBg, 2)
+    sliderBg.Size = UDim2.new(0,114,0,6); sliderBg.Position = UDim2.new(0,140,0.5,-3)
+    sliderBg.BackgroundColor3 = C.bgSec; sliderBg.BorderSizePixel = 0; sliderBg.Parent = row; corner(sliderBg, 3)
+    stroke(sliderBg, C.divider, 1)
 
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1,0,1,20); btn.Position = UDim2.new(0,0,0.5,-10)
