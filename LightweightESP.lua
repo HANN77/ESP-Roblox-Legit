@@ -61,24 +61,24 @@ local keybinds = {
 local waitingForBind = nil
 
 -- ═══════════════════════════════════════════════════════════
--- Color Palette (matches AutoClicker style)
+-- Color Palette (High Contrast "Discord" Dark Mode)
 -- ═══════════════════════════════════════════════════════════
 local C = {
-    bg           = Color3.fromRGB(18, 18, 18),    -- Dark minimalist window
-    bgSec        = Color3.fromRGB(24, 24, 24),    -- Header & secondary
-    surface      = Color3.fromRGB(32, 32, 32),    -- UI elements
-    surfHover    = Color3.fromRGB(42, 42, 42),
-    accent       = Color3.fromRGB(240, 240, 240), -- Sleek white/gray accent
-    accentGlow   = Color3.fromRGB(255, 255, 255),
-    green        = Color3.fromRGB(50, 205, 100),  -- (Used for ESP Health)
-    red          = Color3.fromRGB(235, 70, 80),   -- (Used for ESP Radar/Health)
+    bg           = Color3.fromRGB(30, 31, 35),    -- Clear dark background
+    bgSec        = Color3.fromRGB(43, 45, 50),    -- Header & secondary
+    surface      = Color3.fromRGB(65, 70, 75),    -- Distinct UI elements (sliders, OFF toggles)
+    surfHover    = Color3.fromRGB(85, 90, 95),
+    accent       = Color3.fromRGB(255, 255, 255), 
+    accentGlow   = Color3.fromRGB(220, 220, 220),
+    green        = Color3.fromRGB(67, 181, 129),  -- Vibrant ON string
+    red          = Color3.fromRGB(240, 71, 71),   -- Vibrant OFF string
     orange       = Color3.fromRGB(255, 160, 50),
     cyan         = Color3.fromRGB(0, 200, 255),   -- (Used for ESP Team)
     magenta      = Color3.fromRGB(255, 60, 180),  -- (Used for ESP Chams)
     yellow       = Color3.fromRGB(255, 220, 50),  -- (Used for ESP Health)
-    textPri      = Color3.fromRGB(245, 245, 245),
-    textMut      = Color3.fromRGB(150, 150, 150),
-    divider      = Color3.fromRGB(40, 40, 40),
+    textPri      = Color3.fromRGB(250, 250, 250),
+    textMut      = Color3.fromRGB(170, 175, 180),
+    divider      = Color3.fromRGB(60, 65, 70),
 }
 
 -- ═══════════════════════════════════════════════════════════
