@@ -457,15 +457,14 @@ tbMask.Size = UDim2.new(1,0,0,10); tbMask.Position = UDim2.new(0,0,1,-10)
 tbMask.BackgroundColor3 = C.bgSec; tbMask.BorderSizePixel = 0; tbMask.Parent = tBar
 stroke(tBar, C.divider, 1)
 
-local tabLay = Instance.new("UIListLayout", tBar)
-tabLay.FillDirection = Enum.FillDirection.Horizontal; tabLay.SortOrder = Enum.SortOrder.LayoutOrder
-
 local tabHome = Instance.new("TextButton", tBar)
-tabHome.Size = UDim2.new(0.5,0,1,0); tabHome.BackgroundTransparency = 1; tabHome.Text = "Home"
+tabHome.Size = UDim2.new(0.5,0,1,0); tabHome.Position = UDim2.new(0,0,0,0)
+tabHome.BackgroundTransparency = 1; tabHome.Text = "Home"
 tabHome.TextColor3 = C.accent; tabHome.Font = Enum.Font.GothamMedium; tabHome.TextSize = 12
 
 local tabESP = Instance.new("TextButton", tBar)
-tabESP.Size = UDim2.new(0.5,0,1,0); tabESP.BackgroundTransparency = 1; tabESP.Text = "ESP Visuals"
+tabESP.Size = UDim2.new(0.5,0,1,0); tabESP.Position = UDim2.new(0.5,0,0,0)
+tabESP.BackgroundTransparency = 1; tabESP.Text = "ESP Visuals"
 tabESP.TextColor3 = C.textMut; tabESP.Font = Enum.Font.GothamMedium; tabESP.TextSize = 12
 
 -- Pages Container
