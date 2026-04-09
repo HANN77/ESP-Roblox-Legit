@@ -52,11 +52,14 @@ local settings = {
     chamsOutline = 0.0,
     chamsDepth   = true,  -- true = AlwaysOnTop
     chamsColor   = Color3.fromRGB(255, 60, 180),
+    zoomEnabled  = true,
+    zoomFOV      = 30,
 }
 
 local keybinds = {
     toggle = Enum.KeyCode.H,
     hide   = Enum.KeyCode.RightShift,
+    zoom   = Enum.KeyCode.Z,
 }
 local waitingForBind = nil
 
@@ -520,23 +523,27 @@ local eLay = Instance.new("UIListLayout", pageESP)
 eLay.SortOrder = Enum.SortOrder.LayoutOrder; eLay.Padding = UDim.new(0, 6)
 
 -- Combat Page
-local pageCombat = Instance.new("Frame", pageContainer)
+local pageCombat = Instance.new("ScrollingFrame", pageContainer)
 pageCombat.Size = UDim2.new(1,0,1,0); pageCombat.BackgroundTransparency = 1; pageCombat.Visible = false
-makeText(pageCombat, "\n\nCombat Functionality", 18, Enum.Font.GothamBold, C.accent, 1, Enum.TextXAlignment.Center)
-makeText(pageCombat, "\n\n\n\n\nUnder Development.\nComing in a future update.", 12, Enum.Font.Gotham, C.textMut, 2, Enum.TextXAlignment.Center)
+pageCombat.ScrollBarThickness = 2; pageCombat.ScrollBarImageColor3 = C.divider
+pageCombat.CanvasSize = UDim2.new(0,320,0,1200)
+pageCombat.AutomaticCanvasSize = Enum.AutomaticSize.Y
+pad(pageCombat, 10, 10, 14, 14)
+local cLay = Instance.new("UIListLayout", pageCombat)
+cLay.SortOrder = Enum.SortOrder.LayoutOrder; cLay.Padding = UDim.new(0, 6)
 
 local uiUpdaters = {}
 
-local function secLabel(text, order)
+local function secLabel(text, order, parentPage)
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(1,0,0,16); l.BackgroundTransparency = 1; l.Text = text
     l.TextColor3 = C.textMut; l.Font = Enum.Font.GothamMedium; l.TextSize = 10
-    l.TextXAlignment = Enum.TextXAlignment.Left; l.LayoutOrder = order; l.Parent = pageESP
+    l.TextXAlignment = Enum.TextXAlignment.Left; l.LayoutOrder = order; l.Parent = parentPage or pageESP
 end
 
-local function makeToggle(label, settingKey, order)
+local function makeToggle(label, settingKey, order, parentPage)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(0,310,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
+    row.Size = UDim2.new(0,310,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = parentPage or pageESP
 
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(0,190,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
@@ -585,9 +592,9 @@ local function makeToggle(label, settingKey, order)
     return row
 end
 
-local function makeSlider(label, settingKey, min, max, isFloat, order)
+local function makeSlider(label, settingKey, min, max, isFloat, order, parentPage)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(0,310,0,24); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
+    row.Size = UDim2.new(0,310,0,24); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = parentPage or pageESP
 
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(0,130,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
@@ -685,9 +692,9 @@ local function makeColorPicker(label, settingKey, order)
     end)
 end
 
-local function makeKeybindRow(label, bKey, order)
+local function makeKeybindRow(label, bKey, order, parentPage)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
+    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = parentPage or pageESP
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(0.5,0,1,0); l.BackgroundTransparency = 1; l.Text = label
     l.TextColor3 = C.textPri; l.Font = Enum.Font.Gotham; l.TextSize = 12
@@ -737,6 +744,11 @@ makeColorPicker("Color", "chamsColor", 25)
 
 secLabel("FILTERS", 30)
 makeToggle("Exclude Team", "teamCheck", 31)
+
+secLabel("ZOOM MACRO", 1, pageCombat)
+makeToggle("Enable Zoom", "zoomEnabled", 2, pageCombat)
+makeKeybindRow("Zoom Key", "zoom", 3, pageCombat)
+makeSlider("Zoom FOV", "zoomFOV", 10, 120, false, 4, pageCombat)
 
 local unBtn = Instance.new("TextButton")
 unBtn.Size = UDim2.new(1,0,0,28); unBtn.BackgroundColor3 = C.bgSec; unBtn.TextColor3 = C.red
@@ -801,6 +813,17 @@ table.insert(connections, UserInputService.InputBegan:Connect(function(inp, gp)
     elseif inp.KeyCode == keybinds.hide then
         gui.Enabled = not gui.Enabled
         notify(gui.Enabled and "Panel Visible" or "Panel Hidden", C.accent, 1.5)
+    elseif inp.KeyCode == keybinds.zoom and settings.zoomEnabled then
+        tw(Camera, {FieldOfView = settings.zoomFOV}, 0.25)
+    end
+end))
+
+table.insert(connections, UserInputService.InputEnded:Connect(function(inp, gp)
+    if waitingForBind then return end
+    if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
+    if UserInputService:GetFocusedTextBox() then return end
+    if inp.KeyCode == keybinds.zoom and settings.zoomEnabled then
+        tw(Camera, {FieldOfView = 70}, 0.3)
     end
 end))
 
