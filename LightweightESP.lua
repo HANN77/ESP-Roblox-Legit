@@ -528,34 +528,37 @@ end
 
 local function makeToggle(label, settingKey, order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1,0,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
+    row.Size = UDim2.new(0,310,0,26); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.65,0,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
+    lbl.Size = UDim2.new(0,190,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
     lbl.TextColor3 = C.textPri; lbl.Font = Enum.Font.Gotham; lbl.TextSize = 12
     lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = row
 
-    local toggleBg = Instance.new("TextButton")
-    toggleBg.Size = UDim2.new(0,34,0,16); toggleBg.Position = UDim2.new(1,-34,0.5,-8)
+    local toggleBg = Instance.new("Frame")
+    toggleBg.Size = UDim2.new(0,34,0,16); toggleBg.Position = UDim2.new(0,276,0.5,-8)
     toggleBg.BackgroundColor3 = settings[settingKey] and C.green or C.surface
-    toggleBg.BorderSizePixel = 0; toggleBg.Text = ""; toggleBg.AutoButtonColor = false
-    toggleBg.Parent = row; corner(toggleBg, 8)
+    toggleBg.BorderSizePixel = 0; toggleBg.Parent = row; corner(toggleBg, 8)
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1,0,1,0); btn.BackgroundTransparency = 1; btn.Text = ""
+    btn.Parent = toggleBg
 
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0,12,0,12); knob.BackgroundColor3 = settings[settingKey] and C.bg or C.red; knob.BorderSizePixel = 0
-    knob.Position = settings[settingKey] and UDim2.new(1,-14,0.5,-6) or UDim2.new(0,2,0.5,-6)
+    knob.Position = settings[settingKey] and UDim2.new(0,20,0.5,-6) or UDim2.new(0,2,0.5,-6)
     knob.Parent = toggleBg; corner(knob, 6)
 
     local function updateVisual(on)
         tw(toggleBg, {BackgroundColor3 = on and C.green or C.surface}, 0.2)
         tw(knob, {
-            Position = on and UDim2.new(1,-14,0.5,-6) or UDim2.new(0,2,0.5,-6),
+            Position = on and UDim2.new(0,20,0.5,-6) or UDim2.new(0,2,0.5,-6),
             BackgroundColor3 = on and C.bg or C.red
         }, 0.2)
     end
     uiUpdaters[settingKey] = updateVisual
 
-    toggleBg.MouseButton1Click:Connect(function()
+    btn.MouseButton1Click:Connect(function()
         settings[settingKey] = not settings[settingKey]
         local on = settings[settingKey]
         updateVisual(on)
@@ -566,17 +569,20 @@ end
 
 local function makeSlider(label, settingKey, min, max, isFloat, order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1,0,0,24); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
+    row.Size = UDim2.new(0,310,0,24); row.BackgroundTransparency = 1; row.LayoutOrder = order; row.Parent = pageESP
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.4,0,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
+    lbl.Size = UDim2.new(0,130,1,0); lbl.BackgroundTransparency = 1; lbl.Text = label
     lbl.TextColor3 = C.textPri; lbl.Font = Enum.Font.Gotham; lbl.TextSize = 12
     lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = row
 
-    local sliderBg = Instance.new("TextButton")
-    sliderBg.Size = UDim2.new(0.4,0,0,4); sliderBg.Position = UDim2.new(0.45,0,0.5,-2)
-    sliderBg.BackgroundColor3 = C.surface; sliderBg.BorderSizePixel = 0; sliderBg.Text = ""
-    sliderBg.AutoButtonColor = false; sliderBg.Parent = row; corner(sliderBg, 2)
+    local sliderBg = Instance.new("Frame")
+    sliderBg.Size = UDim2.new(0,114,0,4); sliderBg.Position = UDim2.new(0,140,0.5,-2)
+    sliderBg.BackgroundColor3 = C.surface; sliderBg.BorderSizePixel = 0; sliderBg.Parent = row; corner(sliderBg, 2)
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1,0,1,20); btn.Position = UDim2.new(0,0,0.5,-10)
+    btn.BackgroundTransparency = 1; btn.Text = ""; btn.Parent = sliderBg
 
     local val = settings[settingKey]
     local initPct = (val - min) / (max - min)
@@ -592,14 +598,14 @@ local function makeSlider(label, settingKey, min, max, isFloat, order)
     dragKnob.Parent = sliderFill; corner(dragKnob, 5)
 
     local valLbl = Instance.new("TextLabel")
-    valLbl.Size = UDim2.new(0.15,0,1,0); valLbl.Position = UDim2.new(0.85,0,0,0)
+    valLbl.Size = UDim2.new(0,46,1,0); valLbl.Position = UDim2.new(0,264,0,0)
     valLbl.BackgroundTransparency = 1; 
     valLbl.Text = isFloat and string.format("%.2f", val) or tostring(val)
     valLbl.TextColor3 = C.textPri; valLbl.Font = Enum.Font.GothamMedium; valLbl.TextSize = 11
     valLbl.TextXAlignment = Enum.TextXAlignment.Right; valLbl.Parent = row
 
     local dragging = false
-    sliderBg.MouseButton1Down:Connect(function() dragging = true end)
+    btn.MouseButton1Down:Connect(function() dragging = true end)
     table.insert(connections, UserInputService.InputEnded:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then dragging = false end
     end))
