@@ -1,4 +1,4 @@
-# 👁 Lightweight ESP v2.3
+# 👁 Lightweight ESP v2.5
 
 A lightweight, low-level executor compatible ESP script for Roblox. Designed for **minimal performance impact** and **maximum compatibility** — no Drawing library or high-UNC functions required.
 
@@ -26,9 +26,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/HANN77/ESP-Roblox-Leg
 ## 🎮 Default Keybinds
 
 | Key | Action |
-|-----|--------|
 | `H` | Toggle ESP on/off |
 | `Right Shift` | Show/hide settings panel |
+| `Z` | FOV Zoom (Hold to zoom) |
 
 > All keybinds are **rebindable** from the settings panel.
 
@@ -46,6 +46,8 @@ The draggable GUI panel lets you toggle each feature individually:
 - ✅ Exclude Team
 - 🔧 Max Distance (adjustable with +/− buttons or manual input)
 - 🔧 Keybind remapping
+- 🎯 Enable Zoom (Combat Tab)
+- 🔧 Zoom FOV magnitude
 - ⏻ Unload button for clean teardown
 
 ## 🔧 Why Low-Level Executor Compatible?
