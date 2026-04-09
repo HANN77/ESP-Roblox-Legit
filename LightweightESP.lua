@@ -308,9 +308,7 @@ local function updateESP()
     if not cam then return end
     local vpSize = cam.ViewportSize
     local camCF  = cam.CFrame
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    local myPos  = myRoot and myRoot.Position or Vector3.new(0,0,0)
+    local myPos  = camCF.Position -- FIX: Core distance from camera, enabling ESP while droning/spectating
     local myTeam = LocalPlayer.Team
 
     local camLook = camCF.LookVector
