@@ -16,8 +16,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/HANN77/ESP-Roblox-Leg
 |---------|-------------|
 | **Tracers** | Lines from screen bottom to each enemy |
 | **Health Bars** | Color-coded bars (red → yellow → green) |
-| **Head Highlight** | Magenta dot on enemy heads — scales with distance |
-| **Leg Highlight** | Yellow dots on legs (supports R6 + R15 rigs) |
+| **Highlight** | Full-body outline + glow (visible through walls) |
 | **Radar** | Mini-map with camera-rotated enemy dots |
 | **Names** | Displays player DisplayName above them |
 | **Distance** | Shows distance in studs below each player |
@@ -40,8 +39,7 @@ The draggable GUI panel lets you toggle each feature individually:
 - ✅ ESP Enabled
 - ✅ Tracers
 - ✅ Health Bars
-- ✅ Head Highlight
-- ✅ Leg Highlight
+- ✅ Highlight (full-body outline)
 - ✅ Names
 - ✅ Distance
 - ✅ Radar
@@ -54,8 +52,8 @@ The draggable GUI panel lets you toggle each feature individually:
 
 Most ESP scripts require the `Drawing` library or high-UNC/SUNC functions that only work on premium executors. This script uses **only native Roblox instances**:
 
-- `Frame` — for tracers, health bars, highlights, and radar dots
-- `TextLabel` — for names and distance
+- `Frame` / `TextLabel` — for tracers, health bars, radar dots, names, distance
+- `Highlight` — native Roblox full-body outline (zero-cost, GPU-rendered)
 - `Camera:WorldToViewportPoint()` — for screen-space projection
 
 **No** `Drawing`, **no** `hookfunction`, **no** `getrawmetatable`, **no** `newcclosure`.
@@ -84,9 +82,8 @@ Built to be lightweight with **<2% FPS impact**:
 
 | Color | Meaning |
 |-------|---------|
-| 🟦 Cyan | Tracers / your position on radar |
-| 🟪 Magenta | Head highlight dot |
-| 🟨 Yellow | Leg highlight dots |
+| 🟦 Cyan | Tracers / highlight outline / your radar dot |
+| 🟪 Magenta | Highlight body fill |
 | 🟥 Red | Enemy dots on radar |
 | 🟩 Green → 🟨 Yellow → 🟥 Red | Health bar gradient |
 

@@ -42,8 +42,7 @@ local settings = {
     enabled     = true,
     tracers     = true,
     healthBars  = true,
-    headHighlight = true,
-    legHighlight  = true,
+    highlight   = true,  -- full-body outline
     radar       = true,
     names       = true,
     distance    = true,
@@ -220,23 +219,14 @@ local function createEspSlot()
     slot.hpBar.Size = UDim2.new(1,0,1,0); slot.hpBar.BackgroundColor3 = C.green
     slot.hpBar.BorderSizePixel = 0; slot.hpBar.Parent = slot.hpBg; corner(slot.hpBar, 2)
 
-    -- Head highlight dot
-    slot.headDot = Instance.new("Frame")
-    slot.headDot.Size = UDim2.new(0,8,0,8); slot.headDot.BackgroundColor3 = C.magenta
-    slot.headDot.BorderSizePixel = 0; slot.headDot.AnchorPoint = Vector2.new(0.5,0.5)
-    slot.headDot.Visible = false; slot.headDot.Parent = espGui; corner(slot.headDot, 4)
-    stroke(slot.headDot, C.magenta, 1)
-
-    -- Leg highlight dots
-    slot.legDotL = Instance.new("Frame")
-    slot.legDotL.Size = UDim2.new(0,6,0,6); slot.legDotL.BackgroundColor3 = C.yellow
-    slot.legDotL.BorderSizePixel = 0; slot.legDotL.AnchorPoint = Vector2.new(0.5,0.5)
-    slot.legDotL.Visible = false; slot.legDotL.Parent = espGui; corner(slot.legDotL, 3)
-
-    slot.legDotR = Instance.new("Frame")
-    slot.legDotR.Size = UDim2.new(0,6,0,6); slot.legDotR.BackgroundColor3 = C.yellow
-    slot.legDotR.BorderSizePixel = 0; slot.legDotR.AnchorPoint = Vector2.new(0.5,0.5)
-    slot.legDotR.Visible = false; slot.legDotR.Parent = espGui; corner(slot.legDotR, 3)
+    -- Full-body highlight (native Roblox Highlight instance)
+    slot.highlight = Instance.new("Highlight")
+    slot.highlight.FillColor = C.magenta
+    slot.highlight.FillTransparency = 0.75
+    slot.highlight.OutlineColor = C.cyan
+    slot.highlight.OutlineTransparency = 0
+    slot.highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    slot.highlight.Enabled = false
 
     -- Radar dot (lives inside radar frame, created later)
     slot.radarDot = Instance.new("Frame")
@@ -257,9 +247,8 @@ local function hideSlot(slot)
     slot.nameLabel.Visible = false
     slot.distLabel.Visible = false
     slot.hpBg.Visible = false
-    slot.headDot.Visible = false
-    slot.legDotL.Visible = false
-    slot.legDotR.Visible = false
+    slot.highlight.Enabled = false
+    slot.highlight.Parent = nil
     slot.radarDot.Visible = false
 end
 
@@ -396,48 +385,15 @@ local function updateESP()
             s.hpBg.Visible = false
         end
 
-        -- ── HEAD HIGHLIGHT ──
-        if settings.headHighlight and rootVis then
-            local head = char:FindFirstChild("Head")
-            if head then
-                local hp, hv = cam:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
-                if hv then
-                    local scale = math.clamp(800 / rootPos.Z, 4, 14)
-                    s.headDot.Size = UDim2.new(0, scale, 0, scale)
-                    s.headDot.Position = UDim2.new(0, hp.X, 0, hp.Y)
-                    s.headDot.BackgroundTransparency = 1 - fadeFactor * 0.8
-                    s.headDot.Visible = true
-                else s.headDot.Visible = false end
-            else s.headDot.Visible = false end
+        -- ── FULL-BODY HIGHLIGHT ──
+        if settings.highlight then
+            s.highlight.FillTransparency = 0.65 + (1 - fadeFactor) * 0.3
+            s.highlight.OutlineTransparency = (1 - fadeFactor) * 0.5
+            s.highlight.Parent = char
+            s.highlight.Enabled = true
         else
-            s.headDot.Visible = false
-        end
-
-        -- ── LEG HIGHLIGHTS ──
-        if settings.legHighlight and rootVis then
-            local lleg = char:FindFirstChild("Left Leg") or char:FindFirstChild("LeftFoot") or char:FindFirstChild("LeftLowerLeg")
-            local rleg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightFoot") or char:FindFirstChild("RightLowerLeg")
-            local scale = math.clamp(500 / rootPos.Z, 3, 10)
-            if lleg then
-                local lp, lv = cam:WorldToViewportPoint(lleg.Position)
-                if lv then
-                    s.legDotL.Size = UDim2.new(0,scale,0,scale)
-                    s.legDotL.Position = UDim2.new(0, lp.X, 0, lp.Y)
-                    s.legDotL.BackgroundTransparency = 1 - fadeFactor * 0.7
-                    s.legDotL.Visible = true
-                else s.legDotL.Visible = false end
-            else s.legDotL.Visible = false end
-            if rleg then
-                local rp, rv = cam:WorldToViewportPoint(rleg.Position)
-                if rv then
-                    s.legDotR.Size = UDim2.new(0,scale,0,scale)
-                    s.legDotR.Position = UDim2.new(0, rp.X, 0, rp.Y)
-                    s.legDotR.BackgroundTransparency = 1 - fadeFactor * 0.7
-                    s.legDotR.Visible = true
-                else s.legDotR.Visible = false end
-            else s.legDotR.Visible = false end
-        else
-            s.legDotL.Visible = false; s.legDotR.Visible = false
+            s.highlight.Enabled = false
+            s.highlight.Parent = nil
         end
 
         -- ── RADAR DOT ──
@@ -571,11 +527,10 @@ secLabel("VISUALS", 1)
 makeToggle("ESP Enabled", "enabled", 2, C.accent)
 makeToggle("Tracers", "tracers", 3)
 makeToggle("Health Bars", "healthBars", 4)
-makeToggle("Head Highlight", "headHighlight", 5, C.magenta)
-makeToggle("Leg Highlight", "legHighlight", 6, C.yellow)
-makeToggle("Names", "names", 7)
-makeToggle("Distance", "distance", 8)
-makeToggle("Radar", "radar", 9, C.cyan)
+makeToggle("Highlight", "highlight", 5, C.magenta)
+makeToggle("Names", "names", 6)
+makeToggle("Distance", "distance", 7)
+makeToggle("Radar", "radar", 8, C.cyan)
 
 secLabel("FILTERS", 11)
 makeToggle("Exclude Team", "teamCheck", 12, C.orange)
