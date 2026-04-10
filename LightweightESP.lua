@@ -564,8 +564,13 @@ makeText(pageHome, "• Zero-cost GPU-rendered Chams\n• Extensive Chams config
 
 local d2 = Instance.new("Frame", pageHome); d2.Size=UDim2.new(1,0,0,1); d2.BackgroundColor3=C.divider; d2.LayoutOrder=6; d2.BorderSizePixel=0
 
-makeText(pageHome, "Developer Hub:", 12, Enum.Font.GothamBold, C.accent, 7)
-makeText(pageHome, "github.com/HANN77", 11, Enum.Font.Gotham, C.textMut, 8)
+makeText(pageHome, "Update Log (v2.8):", 12, Enum.Font.GothamBold, C.accent, 7)
+makeText(pageHome, "• Config Profile Dropdown & Overwrite\n• Fullbright & Fog Integration\n• Real-time State Restoration", 11, Enum.Font.Gotham, C.textPri, 8)
+
+local d3 = Instance.new("Frame", pageHome); d3.Size=UDim2.new(1,0,0,1); d3.BackgroundColor3=C.divider; d3.LayoutOrder=9; d3.BorderSizePixel=0
+
+makeText(pageHome, "Developer Hub:", 12, Enum.Font.GothamBold, C.accent, 10)
+makeText(pageHome, "github.com/HANN77", 11, Enum.Font.Gotham, C.textMut, 11)
 
 -- ESP Page (Scrollable)
 local pageESP = Instance.new("ScrollingFrame", pageContainer)
@@ -928,43 +933,132 @@ end
 
 secLabel("PROFILE MANAGEMENT", 1, pageConfig)
 
-local cfgBoxRow = Instance.new("Frame", pageConfig)
-cfgBoxRow.Size = UDim2.new(1,0,0,30); cfgBoxRow.BackgroundTransparency = 1; cfgBoxRow.LayoutOrder = 2
-local cfgBox = Instance.new("TextBox", cfgBoxRow)
-cfgBox.Size = UDim2.new(1,0,1,0); cfgBox.BackgroundColor3 = C.surface
-cfgBox.TextColor3 = C.textPri; cfgBox.Font = Enum.Font.GothamMedium
-cfgBox.TextSize = 12; cfgBox.PlaceholderText = "Config Name..."
-cfgBox.Text = "legit"
-corner(cfgBox, 4); stroke(cfgBox, C.divider, 1)
+local selectedConfig = ""
 
-local cfgSaveRow = Instance.new("Frame", pageConfig)
-cfgSaveRow.Size = UDim2.new(1,0,0,30); cfgSaveRow.BackgroundTransparency = 1; cfgSaveRow.LayoutOrder = 3
-local btnSave = Instance.new("TextButton", cfgSaveRow)
-btnSave.Size = UDim2.new(1,0,1,0); btnSave.BackgroundColor3 = C.bgSec
-btnSave.TextColor3 = C.green; btnSave.Font = Enum.Font.GothamBold; btnSave.TextSize = 12
-btnSave.Text = "Save Config"; corner(btnSave, 4); stroke(btnSave, C.green, 1)
-btnSave.MouseButton1Click:Connect(function() 
-    if cfgBox.Text ~= "" then saveConfig(cfgBox.Text) end 
+local newCfgRow = Instance.new("Frame", pageConfig)
+newCfgRow.Size = UDim2.new(1,0,0,30); newCfgRow.BackgroundTransparency = 1; newCfgRow.LayoutOrder = 2
+local newCfgBox = Instance.new("TextBox", newCfgRow)
+newCfgBox.Size = UDim2.new(0.65,0,1,0); newCfgBox.BackgroundColor3 = C.surface
+newCfgBox.TextColor3 = C.textPri; newCfgBox.Font = Enum.Font.GothamMedium; newCfgBox.TextSize = 12
+newCfgBox.PlaceholderText = "New Config Name..."
+corner(newCfgBox, 4); stroke(newCfgBox, C.divider, 1)
+
+local btnCreate = Instance.new("TextButton", newCfgRow)
+btnCreate.Size = UDim2.new(0.3,0,1,0); btnCreate.Position = UDim2.new(0.7,0,0,0)
+btnCreate.BackgroundColor3 = C.bgSec; btnCreate.TextColor3 = C.accent
+btnCreate.Font = Enum.Font.GothamBold; btnCreate.TextSize = 12; btnCreate.Text = "Create"
+corner(btnCreate, 4); stroke(btnCreate, C.divider, 1)
+
+local function listConfigs()
+    local list = {}
+    pcall(function()
+        for _, file in ipairs(listfiles("LightweightESP/Configs")) do
+            if file:match("%.json$") then
+                local filename = file:match("([^/\\]+)%.json$")
+                if filename then table.insert(list, filename) end
+            end
+        end
+    end)
+    return list
+end
+
+local configDropRow = Instance.new("Frame", pageConfig)
+configDropRow.Size = UDim2.new(1,0,0,30); configDropRow.BackgroundTransparency = 1; configDropRow.LayoutOrder = 3
+
+local btnRefresh = Instance.new("TextButton", configDropRow)
+btnRefresh.Size = UDim2.new(0.15,0,1,0); btnRefresh.Position = UDim2.new(0.85,0,0,0)
+btnRefresh.BackgroundColor3 = C.bgSec; btnRefresh.TextColor3 = C.textMut; btnRefresh.Text = "↻"
+corner(btnRefresh, 4); stroke(btnRefresh, C.divider, 1)
+
+local btnDrop = Instance.new("TextButton", configDropRow)
+btnDrop.Size = UDim2.new(0.8,0,1,0); btnDrop.BackgroundColor3 = C.surface
+btnDrop.TextColor3 = C.textPri; btnDrop.Font = Enum.Font.GothamMedium; btnDrop.TextSize = 12
+btnDrop.Text = "Select Config ▼"
+corner(btnDrop, 4); stroke(btnDrop, C.divider, 1)
+
+local dropContainer = Instance.new("Frame", pageConfig)
+dropContainer.Size = UDim2.new(1,0,0,0); dropContainer.BackgroundTransparency = 1; dropContainer.LayoutOrder = 4
+dropContainer.ClipsDescendants = true
+
+local dropScroll = Instance.new("ScrollingFrame", dropContainer)
+dropScroll.Size = UDim2.new(1,0,1,0); dropScroll.BackgroundTransparency = 1
+dropScroll.ScrollBarThickness = 2; dropScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+local dropLay = Instance.new("UIListLayout", dropScroll)
+dropLay.Padding = UDim.new(0, 2)
+
+local dropOpen = false
+local renderList
+
+btnDrop.MouseButton1Click:Connect(function()
+    dropOpen = not dropOpen
+    if dropOpen then
+        renderList()
+        tw(dropContainer, {Size = UDim2.new(1,0,0,100)}, 0.2)
+        btnDrop.Text = (selectedConfig == "" and "Select Config ▲" or selectedConfig .. " ▲")
+    else
+        tw(dropContainer, {Size = UDim2.new(1,0,0,0)}, 0.2)
+        btnDrop.Text = (selectedConfig == "" and "Select Config ▼" or selectedConfig .. " ▼")
+    end
 end)
 
-local cfgLoadRow = Instance.new("Frame", pageConfig)
-cfgLoadRow.Size = UDim2.new(1,0,0,30); cfgLoadRow.BackgroundTransparency = 1; cfgLoadRow.LayoutOrder = 4
-local btnLoad = Instance.new("TextButton", cfgLoadRow)
-btnLoad.Size = UDim2.new(1,0,1,0); btnLoad.BackgroundColor3 = C.bgSec
-btnLoad.TextColor3 = C.textPri; btnLoad.Font = Enum.Font.GothamMedium; btnLoad.TextSize = 12
-btnLoad.Text = "Load Config"; corner(btnLoad, 4); stroke(btnLoad, C.divider, 1)
-btnLoad.MouseButton1Click:Connect(function() 
-    if cfgBox.Text ~= "" then loadConfig(cfgBox.Text) end 
+renderList = function()
+    for _, c in ipairs(dropScroll:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+    local cfgs = listConfigs()
+    if #cfgs == 0 then selectedConfig = "" end
+    for _, cfg in ipairs(cfgs) do
+        local b = Instance.new("TextButton", dropScroll)
+        b.Size = UDim2.new(1,0,0,24); b.BackgroundColor3 = C.bgSec; b.TextColor3 = C.textMut
+        b.Font = Enum.Font.Gotham; b.TextSize = 11; b.Text = cfg; corner(b, 3)
+        b.MouseButton1Click:Connect(function()
+            selectedConfig = cfg
+            dropOpen = false
+            tw(dropContainer, {Size = UDim2.new(1,0,0,0)}, 0.2)
+            btnDrop.Text = selectedConfig .. " ▼"
+        end)
+    end
+end
+btnRefresh.MouseButton1Click:Connect(renderList)
+
+btnCreate.MouseButton1Click:Connect(function()
+    if newCfgBox.Text ~= "" then 
+        saveConfig(newCfgBox.Text)
+        selectedConfig = newCfgBox.Text
+        btnDrop.Text = selectedConfig .. " ▼"
+        newCfgBox.Text = ""
+        renderList()
+    end
 end)
+
+local actionRow = Instance.new("Frame", pageConfig)
+actionRow.Size = UDim2.new(1,0,0,30); actionRow.BackgroundTransparency = 1; actionRow.LayoutOrder = 5
+
+local btnLoad = Instance.new("TextButton", actionRow)
+btnLoad.Size = UDim2.new(0.48,0,1,0); btnLoad.BackgroundColor3 = C.bgSec
+btnLoad.TextColor3 = C.accent; btnLoad.Font = Enum.Font.GothamBold; btnLoad.TextSize = 12
+btnLoad.Text = "Load"; corner(btnLoad, 4); stroke(btnLoad, C.accent, 1)
+
+local btnSaveAct = Instance.new("TextButton", actionRow)
+btnSaveAct.Size = UDim2.new(0.48,0,1,0); btnSaveAct.Position = UDim2.new(0.52,0,0,0)
+btnSaveAct.BackgroundColor3 = C.bgSec; btnSaveAct.TextColor3 = C.green; btnSaveAct.Font = Enum.Font.GothamBold
+btnSaveAct.TextSize = 12; btnSaveAct.Text = "Overwrite"; corner(btnSaveAct, 4); stroke(btnSaveAct, C.green, 1)
+
+btnLoad.MouseButton1Click:Connect(function()
+    if selectedConfig ~= "" then loadConfig(selectedConfig) end
+end)
+btnSaveAct.MouseButton1Click:Connect(function()
+    if selectedConfig ~= "" then saveConfig(selectedConfig) end
+end)
+
+renderList()
 
 if type(writefile) ~= "function" then
-    secLabel("⚠️ Executor does not support saving files.", 5, pageConfig)
+    secLabel("⚠️ Executor does not support saving files.", 6, pageConfig)
 end
 
 local unBtn = Instance.new("TextButton")
 unBtn.Size = UDim2.new(1,0,0,28); unBtn.BackgroundColor3 = C.bgSec; unBtn.TextColor3 = C.red
 unBtn.Font = Enum.Font.GothamMedium; unBtn.TextSize = 11; unBtn.Text = "Unload Utilities"
-unBtn.AutoButtonColor = false; unBtn.LayoutOrder = 40; unBtn.Parent = pageESP; corner(unBtn, 4); stroke(unBtn, C.divider, 1)
+unBtn.AutoButtonColor = false; unBtn.LayoutOrder = 40; unBtn.Parent = pageMisc; corner(unBtn, 4); stroke(unBtn, C.divider, 1)
 
 main.Size = UDim2.new(0, 360, 0, 440)
 
