@@ -307,19 +307,53 @@ end
 local frameSkip = 0
 local THROTTLE  = 1 -- update every render frame (removes stutter)
 
+local wasFullbright = false
+local origAmbient = Color3.new(0, 0, 0)
+local origColorShift_Bottom = Color3.new(0, 0, 0)
+local origColorShift_Top = Color3.new(0, 0, 0)
+
+local wasRemoveFog = false
+local origFogEnd = 100000
+local origFogStart = 0
+
 local function updateESP()
     frameSkip = frameSkip + 1
     if frameSkip < THROTTLE then return end
     frameSkip = 0
 
     if settings.fullbright then
+        if not wasFullbright then
+            wasFullbright = true
+            origAmbient = Lighting.Ambient
+            origColorShift_Bottom = Lighting.ColorShift_Bottom
+            origColorShift_Top = Lighting.ColorShift_Top
+        end
         Lighting.Ambient = Color3.new(settings.fbAmount, settings.fbAmount, settings.fbAmount)
         Lighting.ColorShift_Bottom = Color3.new(settings.fbAmount, settings.fbAmount, settings.fbAmount)
         Lighting.ColorShift_Top = Color3.new(settings.fbAmount, settings.fbAmount, settings.fbAmount)
+    else
+        if wasFullbright then
+            wasFullbright = false
+            Lighting.Ambient = origAmbient
+            Lighting.ColorShift_Bottom = origColorShift_Bottom
+            Lighting.ColorShift_Top = origColorShift_Top
+        end
     end
+
     if settings.removeFog then
+        if not wasRemoveFog then
+            wasRemoveFog = true
+            origFogEnd = Lighting.FogEnd
+            origFogStart = Lighting.FogStart
+        end
         Lighting.FogEnd = 9e9
         Lighting.FogStart = 9e9
+    else
+        if wasRemoveFog then
+            wasRemoveFog = false
+            Lighting.FogEnd = origFogEnd
+            Lighting.FogStart = origFogStart
+        end
     end
 
     if not settings.enabled then
@@ -1012,6 +1046,17 @@ end))
 local function unload()
     notify("Utilities Unloaded", C.textMut, 1.5)
     task.wait(0.4); running = false
+    
+    if wasFullbright then
+        Lighting.Ambient = origAmbient
+        Lighting.ColorShift_Bottom = origColorShift_Bottom
+        Lighting.ColorShift_Top = origColorShift_Top
+    end
+    if wasRemoveFog then
+        Lighting.FogEnd = origFogEnd
+        Lighting.FogStart = origFogStart
+    end
+    
     for _, cn in ipairs(connections) do pcall(function() cn:Disconnect() end) end
     connections = {}
     tw(main, {BackgroundTransparency = 1}, 0.3)
