@@ -1109,6 +1109,26 @@ end))
 -- ═══════════════════════════════════════════════════════════
 -- Keybind Listener
 -- ═══════════════════════════════════════════════════════════
+local isZooming = false
+local zoomId = "LightweightESP_Zoom_" .. guiId
+local curFOV = Camera.FieldOfView
+
+RunService:BindToRenderStep(zoomId, 201, function()
+    if settings.zoomEnabled then
+        if isZooming then
+            curFOV = curFOV + (settings.zoomFOV - curFOV) * 0.15
+            Camera.FieldOfView = curFOV
+        elseif math.abs(curFOV - 70) > 1 then
+            curFOV = curFOV + (70 - curFOV) * 0.15
+            Camera.FieldOfView = curFOV
+        else
+            curFOV = Camera.FieldOfView
+        end
+    else
+        curFOV = Camera.FieldOfView
+    end
+end)
+
 table.insert(connections, UserInputService.InputBegan:Connect(function(inp, gp)
     if waitingForBind then return end
     if inp.UserInputType ~= Enum.UserInputType.Keyboard and not inp.UserInputType.Name:match("MouseButton") then return end
@@ -1121,7 +1141,7 @@ table.insert(connections, UserInputService.InputBegan:Connect(function(inp, gp)
         gui.Enabled = not gui.Enabled
         notify(gui.Enabled and "Panel Visible" or "Panel Hidden", C.accent, 1.5)
     elseif (inp.KeyCode == keybinds.zoom or inp.UserInputType == keybinds.zoom) and settings.zoomEnabled then
-        tw(Camera, {FieldOfView = settings.zoomFOV}, 0.25)
+        isZooming = true
     end
 end))
 
@@ -1130,7 +1150,7 @@ table.insert(connections, UserInputService.InputEnded:Connect(function(inp, gp)
     if inp.UserInputType ~= Enum.UserInputType.Keyboard and not inp.UserInputType.Name:match("MouseButton") then return end
     if UserInputService:GetFocusedTextBox() then return end
     if (inp.KeyCode == keybinds.zoom or inp.UserInputType == keybinds.zoom) and settings.zoomEnabled then
-        tw(Camera, {FieldOfView = 70}, 0.3)
+        isZooming = false
     end
 end))
 
@@ -1150,6 +1170,8 @@ local function unload()
         Lighting.FogEnd = origFogEnd
         Lighting.FogStart = origFogStart
     end
+    
+    pcall(function() RunService:UnbindFromRenderStep("LightweightESP_Zoom_" .. guiId) end)
     
     for _, cn in ipairs(connections) do pcall(function() cn:Disconnect() end) end
     connections = {}
