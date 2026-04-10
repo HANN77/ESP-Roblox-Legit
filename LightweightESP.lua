@@ -9,7 +9,7 @@
     Run in-game via any executor.
 ]]
 
-local SCRIPT_VERSION = "2.7"
+local SCRIPT_VERSION = "2.8"
 local MAX_POOL = 24 -- max simultaneous tracked players
 
 -- ═══════════════════════════════════════════════════════════
@@ -21,6 +21,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService  = game:GetService("TweenService")
 local CoreGui       = game:GetService("CoreGui")
 local HttpService   = game:GetService("HttpService")
+local Lighting      = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera      = workspace.CurrentCamera
@@ -60,6 +61,9 @@ local settings = {
     chamsColor   = Color3.fromRGB(255, 60, 180),
     zoomEnabled  = true,
     zoomFOV      = 30,
+    fullbright   = false,
+    fbAmount     = 0.7,
+    removeFog    = false,
 }
 
 local keybinds = {
@@ -308,6 +312,16 @@ local function updateESP()
     if frameSkip < THROTTLE then return end
     frameSkip = 0
 
+    if settings.fullbright then
+        Lighting.Ambient = Color3.new(settings.fbAmount, settings.fbAmount, settings.fbAmount)
+        Lighting.ColorShift_Bottom = Color3.new(settings.fbAmount, settings.fbAmount, settings.fbAmount)
+        Lighting.ColorShift_Top = Color3.new(settings.fbAmount, settings.fbAmount, settings.fbAmount)
+    end
+    if settings.removeFog then
+        Lighting.FogEnd = 9e9
+        Lighting.FogStart = 9e9
+    end
+
     if not settings.enabled then
         for i = 1, MAX_POOL do hideSlot(pool[i]) end
         radarFrame.Visible = false
@@ -467,7 +481,7 @@ tbMask.Size = UDim2.new(1,0,0,10); tbMask.Position = UDim2.new(0,0,1,-10)
 tbMask.BackgroundColor3 = C.bgSec; tbMask.BorderSizePixel = 0; tbMask.Parent = tBar
 stroke(tBar, C.divider, 1)
 
-local tabs = {"Home", "Visual", "Combat", "Config"}
+local tabs = {"Home", "Visual", "Combat", "Misc", "Config"}
 local tabBtns = {}
 local w = 1 / #tabs
 
@@ -538,6 +552,16 @@ pageCombat.AutomaticCanvasSize = Enum.AutomaticSize.Y
 pad(pageCombat, 10, 10, 14, 14)
 local cLay = Instance.new("UIListLayout", pageCombat)
 cLay.SortOrder = Enum.SortOrder.LayoutOrder; cLay.Padding = UDim.new(0, 6)
+
+-- Misc Page
+local pageMisc = Instance.new("ScrollingFrame", pageContainer)
+pageMisc.Size = UDim2.new(1,0,1,0); pageMisc.BackgroundTransparency = 1; pageMisc.Visible = false
+pageMisc.ScrollBarThickness = 2; pageMisc.ScrollBarImageColor3 = C.divider
+pageMisc.CanvasSize = UDim2.new(0,320,0,1200)
+pageMisc.AutomaticCanvasSize = Enum.AutomaticSize.Y
+pad(pageMisc, 10, 10, 14, 14)
+local mLay = Instance.new("UIListLayout", pageMisc)
+mLay.SortOrder = Enum.SortOrder.LayoutOrder; mLay.Padding = UDim.new(0, 6)
 
 -- Config Page
 local pageConfig = Instance.new("ScrollingFrame", pageContainer)
@@ -805,6 +829,11 @@ makeToggle("Enable Zoom", "zoomEnabled", 2, pageCombat)
 makeKeybindRow("Zoom Key", "zoom", 3, pageCombat)
 makeSlider("Zoom FOV", "zoomFOV", 10, 120, false, 4, pageCombat)
 
+secLabel("ENVIRONMENT", 1, pageMisc)
+makeToggle("Fullbright", "fullbright", 2, pageMisc)
+makeSlider("FB Brightness", "fbAmount", 0, 1, true, 3, pageMisc)
+makeToggle("Remove Fog", "removeFog", 4, pageMisc)
+
 -- ═══════════════════════════════════════════════════════════
 -- Config System logic
 -- ═══════════════════════════════════════════════════════════
@@ -913,6 +942,7 @@ for tName, btn in pairs(tabBtns) do
         pageHome.Visible = (tName == "Home")
         pageESP.Visible = (tName == "Visual")
         pageCombat.Visible = (tName == "Combat")
+        pageMisc.Visible = (tName == "Misc")
         pageConfig.Visible = (tName == "Config")
     end)
 end
