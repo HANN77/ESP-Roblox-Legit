@@ -457,7 +457,7 @@ main.Position = UDim2.new(0, 14, 0.5, -220); main.BackgroundColor3 = C.bg; main.
 corner(main, 6); stroke(main, C.divider, 1)
 
 local tBar = Instance.new("Frame", main); tBar.Size = UDim2.new(1,0,0,36); tBar.BackgroundColor3 = C.bgSec
-corner(tBar, 6); stroke(tBar, C.divider, 1); Instance.new("Frame", tBar).Size = UDim2.new(1,0,0,10); tBar.M.Position = UDim2.new(0,0,1,-10)
+local mask = Instance.new("Frame", tBar); mask.Name = "M"; mask.Size = UDim2.new(1,0,0,10); mask.Position = UDim2.new(0,0,1,-10); mask.BackgroundColor3 = C.bgSec; mask.BorderSizePixel = 0; corner(mask, 0)
 
 local tabs, tabBtns = {"Home", "Visual", "Combat", "Misc", "Config"}, {}
 for i, name in ipairs(tabs) do
@@ -546,7 +546,12 @@ local function makeKeybind(label, bKey, order, parent)
 end
 
 -- Construction
-local hp = pages.Home; makeText = function(p, t, s, f, c, o) local l = Instance.new("TextLabel", p); l.Size = UDim2.new(1,0,0,s+8); l.Text = t; l.TextColor3 = c; l.Font = f; l.TextSize = s; l.BackgroundTransparency = 1; l.LayoutOrder = o end
+local hp = pages.Home
+local function makeText(p, t, s, f, c, o)
+    local l = Instance.new("TextLabel", p)
+    l.Size = UDim2.new(1,0,0,s+8); l.Text = t; l.TextColor3 = c; l.Font = f; l.TextSize = s
+    l.BackgroundTransparency = 1; l.LayoutOrder = o
+end
 makeText(hp, "Lightweight ESP v3.0", 20, Enum.Font.GothamBold, C.accent, 1)
 makeText(hp, "Premium Edition — by FusedHann", 12, Enum.Font.GothamMedium, C.textMut, 2)
 makeText(hp, "• Distance-based Sorting\n• HSV Color Palette\n• Smooth Legit Aim Assist\n• Visibility Checks", 12, Enum.Font.Gotham, C.textPri, 4)
