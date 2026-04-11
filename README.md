@@ -1,6 +1,6 @@
-# 👁 Lightweight ESP v2.8
+# 👁️ Lightweight ESP & LegitBot v3.1 (Premium)
 
-A lightweight, low-level executor compatible ESP script for Roblox. Designed for **minimal performance impact** and **maximum compatibility** — no Drawing library or high-UNC functions required.
+A lightweight, high-performance, and low-level executor compatible utility for Roblox. Designed for **zero performance impact** and **maximum compatibility** — no Drawing library or high-UNC functions required.
 
 ## ⚡ Quick Start
 
@@ -10,97 +10,101 @@ Paste this into **any** executor and run:
 loadstring(game:HttpGet("https://raw.githubusercontent.com/HANN77/ESP-Roblox-Legit/main/LightweightESP.lua"))()
 ```
 
+---
+
 ## ✨ Features
 
 | Feature | Description |
 |---------|-------------|
-| **Tracers** | Lines from screen bottom to each enemy |
-| **Health Bars** | Color-coded bars (red → yellow → green) |
-| **Highlight** | Full-body outline + glow (visible through walls) |
-| **Radar** | Mini-map with camera-rotated enemy dots |
-| **Names** | Displays player DisplayName above them |
-| **Distance** | Shows distance in studs below each player |
-| **Team Exclusion** | Toggle to hide your own teammates |
-| **Max Distance** | Adjustable range: 50 – 2000 studs |
+| **Legit Aim Assist** | Smooth tracking with FOV check and Head/Body target selection |
+| **JSON Configs** | Save and Load multiple setting profiles as JSON files |
+| **Tracers** | Optimized lines from screen bottom to each enemy |
+| **Health Bars** | Dynamic, color-coded bars (red → yellow → green) |
+| **Bounding Boxes** | Standard and **Corner** box options with distance fading |
+| **High-Tier Chams** | GPU-rendered full-body highlights (Bypasses 31-Highlight limit) |
+| **Mini Radar** | Mini-map with smooth camera rotation and enemy tracking |
+| **Names & Dist** | High-visibility player info rendered via native labels |
+| **HSV Customization**| Full Color Picker for all visual elements |
 
-## 🎮 Default Keybinds
+---
 
-| Key | Action |
+## 🎮 Controls
+
+| Key/Input | Action |
 |-----|--------|
-| `H` | Toggle ESP on/off |
-| `Right Shift` | Show/hide settings panel |
+| `H` | Toggle ESP System on/off |
+| `Right Shift` | Show/Hide Settings Panel |
+| `Right Click` | **Aim Assist** (Hold to track target) |
 | `Z` | FOV Zoom (Hold to zoom) |
 
-> You can customize the key bindings however you like from the settings panel.
+---
 
-## 🖥️ Settings Panel
+## 🖥️ UI Tabs
 
-The draggable GUI panel lets you toggle each feature individually:
+### 🏠 Home
+*   Overview of the script version and features.
+*   System status and credits.
 
-- ✅ ESP Enabled
-- ✅ Tracers
-- ✅ Health Bars
-- ✅ Highlight (full-body outline)
-- ✅ Names
-- ✅ Distance
-- ✅ Radar
-- ✅ Exclude Team
-- 🔧 Max Distance (adjustable with +/− buttons or manual input)
-- 🔧 Keybind remapping
-- 🎯 Enable Zoom (Combat Tab)
-- 🔧 Zoom FOV magnitude
-- 💡 Fullbright & Adjustable Brightness (Misc Tab)
-- 🌫️ Remove Fog (Misc Tab)
-- 💾 Config Save/Load System (JSON serialization)
-- ⏻ Unload button for clean teardown
+### 👁️ Visuals
+*   **ESP Toggles**: Tracers, Boxes, Names, Distance, Radar.
+*   **Box Style**: Toggle between Standard and **Corner** boxes.
+*   **Distance Culling**: Adjustable range from 50 to 2000 studs.
+*   **Team Options**: Exclude teammates or use Team Colors for ESP.
+*   **HSV Color Picker**: Real-time color adjustment for all visual elements.
 
-## 🔧 Why Low-Level Executor Compatible?
+### 🎯 Combat
+*   **Aim Assist**: Smoothly assists your aim toward the nearest target in FOV.
+*   **Target Selection**: Switch between **Head** and **Body** targeting.
+*   **Smoothing**: Adjustable interpolation (1–25) for human-like movement.
+*   **Aim FOV**: Adjustable FOV circle size on screen.
 
-Most ESP scripts require the `Drawing` library or high-UNC/SUNC functions that only work on premium executors. This script uses **only native Roblox instances**:
+### 🌫️ Misc
+*   **Fullbright**: Adjustable world brightness (Gamma boost).
+*   **Remove Fog**: Removes standard Roblox lighting fog for clear visibility.
+*   **Unload**: Cleanly destroys all GUI and rendering threads.
 
-- `Frame` / `TextLabel` — for tracers, health bars, radar dots, names, distance
-- `Highlight` — native Roblox full-body outline (zero-cost, GPU-rendered)
-- `Camera:WorldToViewportPoint()` — for screen-space projection
+### 💾 Config
+*   **Save/Load**: Save your custom settings to `LightweightESP/Configs/*.json`.
+*   **Auto-Load**: The `default` profile automatically loads on every execution.
 
-**No** `Drawing`, **no** `hookfunction`, **no** `getrawmetatable`, **no** `newcclosure`.
+---
+
+## 🔧 Why Native-Instance Oriented?
+
+Most ESP scripts require the `Drawing` library or high-UNC functions that only work on premium executors. This script uses **only native Roblox instances**:
+
+- `Frame` / `TextLabel` — for tracers, health bars, radar dots, boxes, names, distance.
+- `Highlight` — native Roblox full-body outline (zero-cost, GPU-rendered).
+- `workspace:Raycast` — for accurate visibility checks behind walls.
 
 Works on: **Solara, Fluxus, Arceus X, Delta, JJSploit**, and any executor that supports `CoreGui` parenting + `HttpGet`.
+
+---
 
 ## ⚡ Performance
 
 Built to be lightweight with **<2% FPS impact**:
 
-- **Object Pooling** — 24 pre-allocated ESP slots, zero runtime `Instance.new` calls
-- **Frame Throttling** — renders every 2nd frame instead of every frame
-- **Distance Culling** — ignores players beyond your max distance
-- **Viewport Culling** — skips off-screen players automatically
-- **Fade-by-Distance** — transparency scales with distance
-
-## 🛡️ Anti-Detection
-
-- Random GUI naming (changes every execution)
-- No modification of other players' characters
-- No remote event hooking or metatable tampering
-- Pure client-side screen-space rendering
-- Clean unload with full instance teardown
-
-## 📋 Color Legend
-
-| Color | Meaning |
-|-------|---------|
-| 🟦 Cyan | Tracers / highlight outline / your radar dot |
-| 🟪 Magenta | Highlight body fill |
-| 🟥 Red | Enemy dots on radar |
-| 🟩 Green → 🟨 Yellow → 🟥 Red | Health bar gradient |
-
-## ⚠️ Disclaimer
-
-This script is for **educational purposes only**. Use at your own risk. The developer is not responsible for any bans or consequences resulting from use of this script.
-
-## 📝 Credits
-
-Made by **FusedHann**
+- **Object Pooling**: 24 pre-allocated ESP slots, zero runtime `Instance.new` calls.
+- **Frame Throttling**: Intelligent render-loop throttling to save CPU cycles.
+- **Distance-Based Sorting**: Intelligently prioritizes Highlights for the closest 31 players to stay within engine limits.
+- **Viewport Culling**: Skips off-screen player calculations automatically.
 
 ---
 
-*If this helped you, give the repo a ⭐!*
+## 🛡️ Anti-Detection
+
+- **Random GUI Naming**: Bypasses many simple GUI-scanning anti-cheats.
+- **No Metatable Tampering**: Does not hook `Index`, `NewIndex`, or `Namecall`.
+- **Screen-Space Only**: Pure rendering without modifying game memory or player characters.
+- **Clean Teardown**: Leaves zero traces in CoreGui after unloading.
+
+---
+
+## 📝 Credits
+
+Made by **FusedHann** (v3.1)
+
+---
+
+*If this script helped you, give the repository a ⭐!*
