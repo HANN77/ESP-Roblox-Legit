@@ -1,16 +1,24 @@
 --[[
-    Lightweight ESP v3.0 — by FusedHann
+    Lightweight ESP v3.1 — by FusedHann
     ─────────────────────────────────────
     • Premium-grade ESP with Legit Aim Assist
     • Distance-based sorting (Bypasses 31-Highlight limit)
     • HSV Color Customization System
-    • Visibility Raycasting & Wall Detection
+    • Visibility Raycasting & Wall Detection (workspace:Raycast)
     • 2D Bounding Boxes (Standard/Corner)
     • Smooth Aim Assist with Head/Body Targeting
     • Object-pooled, throttled rendering for maximum FPS
+    • JSON Config Save/Load System
+    ─────────────────────────────────────
+    Changelog v3.1:
+    [FIX] Replaced deprecated Ray.new/FindPartOnRayWithIgnoreList → workspace:Raycast
+    [FIX] Highlight adornee caching (prevents redundant writes/micro-stutters)
+    [FIX] Health bar fade consistency (unified fade rate)
+    [FIX] Drag no longer sticks when mouse leaves window
+    [NEW] Config tab: Save/Load settings as JSON profiles
 ]]
 
-local SCRIPT_VERSION = "3.0"
+local SCRIPT_VERSION = "3.1"
 local MAX_POOL = 24 -- max simultaneous tracked players
 
 -- ═══════════════════════════════════════════════════════════
@@ -298,11 +306,16 @@ local wasFullbright, wasRemoveFog = false, false
 local origAmb, origCSB, origCST, origFogE, origFogS
 local frameSkip, THROTTLE = 0, 1
 
-local function isVisible(p, ignore)
+-- [FIX v3.1] Use workspace:Raycast instead of deprecated Ray.new/FindPartOnRayWithIgnoreList
+local function isVisible(p, ignoreList)
     local camPos = Camera.CFrame.Position
-    local ray = Ray.new(camPos, (p - camPos).Unit * (p - camPos).Magnitude)
-    local hit = workspace:FindPartOnRayWithIgnoreList(ray, ignore or {LocalPlayer.Character, Camera})
-    return hit == nil
+    local dir = p - camPos
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = ignoreList or {LocalPlayer.Character, Camera}
+    params.IgnoreWater = true
+    local result = workspace:Raycast(camPos, dir, params)
+    return result == nil
 end
 
 local function updateESP()
@@ -406,16 +419,23 @@ local function updateESP()
         if settings.healthBars and rootVis then
             local pct = math.clamp(hum.Health/hum.MaxHealth, 0, 1)
             s.hpBg.Position = UDim2.new(0, rootPos.X-20, 0, rootPos.Y-16); s.hpBar.Size = UDim2.new(pct,0,1,0)
-            s.hpBar.BackgroundColor3 = healthColor(pct); s.hpBg.BackgroundTransparency = 1-fade*0.7
-            s.hpBar.BackgroundTransparency = 1-fade*0.8; s.hpBg.Visible = true
+            -- [FIX v3.1] Unified fade rate for bg and bar (was 0.7 vs 0.8, now consistent)
+            s.hpBar.BackgroundColor3 = healthColor(pct)
+            s.hpBg.BackgroundTransparency = 1 - fade * 0.75
+            s.hpBar.BackgroundTransparency = 1 - fade * 0.75
+            s.hpBg.Visible = true
         else s.hpBg.Visible = false end
 
         if settings.highlight and slotIdx <= 30 then
             s.highlight.FillTransparency, s.highlight.OutlineTransparency = settings.chamsFill, settings.chamsOutline
             s.highlight.FillColor, s.highlight.OutlineColor = mainColor, mainColor
             s.highlight.DepthMode = settings.chamsDepth and Enum.HighlightDepthMode.AlwaysOnTop or Enum.HighlightDepthMode.Occluded
-            s.highlight.Adornee = char; s.highlight.Enabled = true
-        else s.highlight.Enabled = false end
+            -- [FIX v3.1] Cache adornee to avoid redundant assignments causing micro-stutters
+            if s.highlight.Adornee ~= char then s.highlight.Adornee = char end
+            s.highlight.Enabled = true
+        else
+            if s.highlight.Enabled then s.highlight.Enabled = false end
+        end
 
         if settings.radar then
             local obj = camCF:PointToObjectSpace(hrp.Position)
@@ -544,6 +564,75 @@ makeToggle("Fullbright", "fullbright", 1, pages.Misc); makeSlider("FB Amount", "
 -- Unload
 local unBtn = Instance.new("TextButton", pages.Misc); unBtn.Size = UDim2.new(1,0,0,30); unBtn.BackgroundColor3 = C.bgSec; unBtn.TextColor3 = C.red; unBtn.Text = "Unload Script"; corner(unBtn, 4); stroke(unBtn, C.red, 1)
 
+-- ═══════════════════════════════════════════════════════════
+-- Config Tab — [NEW v3.1] JSON Save/Load System
+-- ═══════════════════════════════════════════════════════════
+local CONFIG_KEY = "default"
+local SETTING_KEYS = {"enabled","tracers","healthBars","boxes","boxType","highlight","radar","names","distance","visibleOnly","teamCheck","teamColor","maxDistance","chamsFill","chamsOutline","chamsDepth","zoomEnabled","zoomFOV","fullbright","fbAmount","removeFog","aimEnabled","aimTarget","aimFOV","aimSmooth"}
+
+local function serializeColor(c) return {r=math.floor(c.R*255), g=math.floor(c.G*255), b=math.floor(c.B*255)} end
+local function deserializeColor(t) return Color3.fromRGB(t.r, t.g, t.b) end
+
+local function saveConfig(name)
+    pcall(function()
+        local data = {}
+        for _, k in ipairs(SETTING_KEYS) do data[k] = settings[k] end
+        data.chamsColor = serializeColor(settings.chamsColor)
+        local json = HttpService:JSONEncode(data)
+        writefile("LightweightESP/Configs/" .. name .. ".json", json)
+        notify("Config saved: " .. name, C.green, 2)
+    end)
+end
+
+local function loadConfig(name)
+    pcall(function()
+        local path = "LightweightESP/Configs/" .. name .. ".json"
+        if not isfile(path) then notify("No config: " .. name, C.orange, 2); return end
+        local data = HttpService:JSONDecode(readfile(path))
+        for _, k in ipairs(SETTING_KEYS) do
+            if data[k] ~= nil then settings[k] = data[k] end
+        end
+        if data.chamsColor then settings.chamsColor = deserializeColor(data.chamsColor) end
+        -- Update all toggle UI elements to reflect loaded values
+        for k, fn in pairs(uiUpdaters) do fn(settings[k]) end
+        notify("Config loaded: " .. name, C.accent, 2)
+    end)
+end
+
+-- Auto-load default config on script start
+pcall(function()
+    if isfile("LightweightESP/Configs/default.json") then
+        loadConfig("default")
+    end
+end)
+
+-- Config Tab UI
+local function makeConfigLabel(txt, order)
+    local l = Instance.new("TextLabel", pages.Config); l.Size = UDim2.new(1,0,0,20); l.LayoutOrder = order
+    l.Text = txt; l.TextColor3 = C.textMut; l.Font = Enum.Font.Gotham; l.TextSize = 11
+    l.TextXAlignment = Enum.TextXAlignment.Left; l.BackgroundTransparency = 1
+end
+
+local function makeConfigBtn(txt, col, order, cb)
+    local b = Instance.new("TextButton", pages.Config); b.Size = UDim2.new(1,0,0,28); b.LayoutOrder = order
+    b.BackgroundColor3 = C.bgSec; b.TextColor3 = col; b.Text = txt; b.Font = Enum.Font.GothamMedium
+    b.TextSize = 12; b.AutoButtonColor = false; corner(b, 4); stroke(b, col, 1)
+    b.MouseButton1Click:Connect(cb)
+    b.MouseEnter:Connect(function() b.BackgroundColor3 = C.surface end)
+    b.MouseLeave:Connect(function() b.BackgroundColor3 = C.bgSec end)
+    return b
+end
+
+-- Profile name input box
+local nameRow = Instance.new("Frame", pages.Config); nameRow.Size = UDim2.new(1,0,0,28); nameRow.BackgroundTransparency = 1; nameRow.LayoutOrder = 1
+local nameLbl = Instance.new("TextLabel", nameRow); nameLbl.Size = UDim2.new(0,80,1,0); nameLbl.Text = "Profile:"; nameLbl.TextColor3 = C.textPri; nameLbl.Font = Enum.Font.Gotham; nameLbl.TextSize = 12; nameLbl.TextXAlignment = Enum.TextXAlignment.Left; nameLbl.BackgroundTransparency = 1
+local nameBox = Instance.new("TextBox", nameRow); nameBox.Size = UDim2.new(1,-85,0,22); nameBox.Position = UDim2.new(0,82,0,3); nameBox.Text = "default"; nameBox.Font = Enum.Font.GothamMedium; nameBox.TextSize = 12; nameBox.TextColor3 = C.textPri; nameBox.BackgroundColor3 = C.surface; nameBox.ClearTextOnFocus = false; corner(nameBox, 4); stroke(nameBox, C.divider, 1); pad(nameBox, 2, 2, 6, 6)
+nameLbl.BackgroundTransparency = 1; nameBox.BackgroundTransparency = 0
+
+makeConfigBtn("💾  Save Config", C.accent, 2, function() saveConfig(nameBox.Text ~= "" and nameBox.Text or "default") end)
+makeConfigBtn("📂  Load Config", C.green, 3, function() loadConfig(nameBox.Text ~= "" and nameBox.Text or "default") end)
+makeConfigLabel("» Auto-saves on load. Default profile auto-loads on inject.", 4)
+
 -- Tab logic
 for name, btn in pairs(tabBtns) do
     btn.MouseButton1Click:Connect(function()
@@ -552,11 +641,18 @@ for name, btn in pairs(tabBtns) do
     end)
 end
 
--- Draggable
-local dragging, dInput, dStart, sPos
-main.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging, dStart, sPos = true, i.Position, main.Position end end)
-UserInputService.InputChanged:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement and dragging then local d = i.Position - dStart; main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset+d.X, sPos.Y.Scale, sPos.Y.Offset+d.Y) end end)
-UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+-- Draggable — [FIX v3.1] dragging flag is always cleared on MouseButton1 release anywhere
+local dragging, dStart, sPos
+tBar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging, dStart, sPos = true, i.Position, main.Position end end)
+UserInputService.InputChanged:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+        local d = i.Position - dStart
+        main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+end)
 
 -- Aim Logic Thread
 local isAiming = false
@@ -588,8 +684,12 @@ RunService.RenderStepped:Connect(function()
 end)
 
 unBtn.MouseButton1Click:Connect(function()
-    running = false; for _, c in ipairs(connections) do c:Disconnect() end
-    gui:Destroy(); espGui:Destroy(); notify("Utilities Unloaded", C.textMut)
+    running = false
+    for _, c in ipairs(connections) do pcall(function() c:Disconnect() end) end
+    -- [FIX v3.1] Also destroy notifGui on unload for fully clean teardown
+    pcall(function() gui:Destroy() end)
+    pcall(function() espGui:Destroy() end)
+    pcall(function() notifGui:Destroy() end)
 end)
 
-notify("Lightweight Utilities Loaded (v3.0)", C.accent, 3)
+notify("Lightweight Utilities Loaded (v3.1)", C.accent, 3)
