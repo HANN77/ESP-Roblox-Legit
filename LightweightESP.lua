@@ -306,16 +306,21 @@ local wasFullbright, wasRemoveFog = false, false
 local origAmb, origCSB, origCST, origFogE, origFogS
 local frameSkip, THROTTLE = 0, 1
 
--- [FIX v3.1] Use workspace:Raycast instead of deprecated Ray.new/FindPartOnRayWithIgnoreList
+-- [FIX v3.1.2] Robust isVisible — filters nil values to avoid RaycastParams crash during respawn
 local function isVisible(p, ignoreList)
     local camPos = Camera.CFrame.Position
     local dir = p - camPos
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = ignoreList or {LocalPlayer.Character, Camera}
-    params.IgnoreWater = true
-    local result = workspace:Raycast(camPos, dir, params)
-    return result == nil
+    local ok, result = pcall(function()
+        local params = RaycastParams.new()
+        params.FilterType = Enum.RaycastFilterType.Exclude
+        local safe = {}
+        for _, v in ipairs(ignoreList or {}) do
+            if v then table.insert(safe, v) end
+        end
+        params.FilterDescendantsInstances = safe
+        return workspace:Raycast(camPos, dir, params)
+    end)
+    return (not ok) or result == nil
 end
 
 local function updateESP()
@@ -457,7 +462,10 @@ main.Position = UDim2.new(0, 14, 0.5, -220); main.BackgroundColor3 = C.bg; main.
 corner(main, 6); stroke(main, C.divider, 1)
 
 local tBar = Instance.new("Frame", main); tBar.Size = UDim2.new(1,0,0,36); tBar.BackgroundColor3 = C.bgSec
-local mask = Instance.new("Frame", tBar); mask.Name = "M"; mask.Size = UDim2.new(1,0,0,10); mask.Position = UDim2.new(0,0,1,-10); mask.BackgroundColor3 = C.bgSec; mask.BorderSizePixel = 0; corner(mask, 0)
+corner(tBar, 6); stroke(tBar, C.divider, 1)
+-- Mask frame covers the bottom rounded corners of tBar so it blends flush into the page area below
+local mask = Instance.new("Frame", tBar); mask.Name = "M"; mask.Size = UDim2.new(1,0,0,10)
+mask.Position = UDim2.new(0,0,1,-10); mask.BackgroundColor3 = C.bgSec; mask.BorderSizePixel = 0
 
 local tabs, tabBtns = {"Home", "Visual", "Combat", "Misc", "Config"}, {}
 for i, name in ipairs(tabs) do
